@@ -1,0 +1,88 @@
+\section{Problem Setting}
+\label{sec:problem}
+
+\subsection{Characteristics of Quotation Analysis Forms (QAFs)}
+A Quotation Analysis Form (QAF) is a semi-structured document exchanged during early supplier negotiations.  
+At BMW, QAFs appear in multiple digital formats—CSV exports, Excel sheets, and supplier-specific PDF templates.  
+Typical fields include:  
+
+\begin{itemize}
+  \item \textbf{Part Designation:} free-text description (e.\,g., ``STM32F103C8 MCU 64\,KB Flash TQFP48''),
+  \item \textbf{Technical Specs:} one or more numeric attributes (voltage, current, temperature limits),
+  \item \textbf{Price and MOQ:} preliminary unit price, minimum order quantity,
+  \item \textbf{Manufacturer Part Number (MPN):} often concatenated with package or tolerance, occasionally missing or misspelled.
+\end{itemize}
+
+The absence of a universal schema means column order, header names, and punctuation vary widely across suppliers.  
+Furthermore, multilingual notations (``Gehäuse'', ``Temp. Bereich'') complicate rule-based parsing.
+
+\subsection{Core Challenges}
+\paragraph{C1: Inconsistent Identifier Extraction}  
+An MPN may be surrounded by package codes (``\texttt{-TR}''), voltage values, or marketing text, making pattern-matching unreliable.  
+Example:  
+\begin{center}
+\ttfamily PI3USB9281ZLE\_EX   20V Vbus Switch, TQFN-14, -40–85°C
+\end{center}
+
+\paragraph{C2: Heterogeneous Datasheet Sources}  
+Even after a correct MPN is found, the corresponding datasheet might be located on:
+\begin{enumerate}
+  \item manufacturer domains (trusted),
+  \item distributor portals (moderately trusted),
+  \item third-party PDF mirrors (low trust, risk of 404 or captcha).
+\end{enumerate}
+Selecting the ``best'' source requires ranking by reliability, download cost, and historical success.
+
+\paragraph{C3: Complex Document Layouts}  
+Technical PDFs mix tables, figures, and footnotes.  
+Numeric specs can appear in summary tables or deep in application sections.  
+Standard OCR engines often split rows or mis-align columns, reducing extraction accuracy.
+
+\paragraph{C4: Lack of Validation and Provenance}  
+Classic table-extraction pipelines output values without units or context.  
+For safety-critical components, engineers must know \emph{where} a value came from (page and bounding box) and whether it respects physical constraints (e.\,g., voltage $>$ 0).
+
+\subsection{Formal Problem Definition}
+Let $q \in \mathcal{Q}$ denote a single QAF entry containing noisy text tokens.  
+The task is to compute a validated specification record  
+\[
+\mathbf{s} = \bigl(\mathrm{MPN},\; \mathrm{Voltage_{max}},\; \mathrm{Current_{max}},\; \mathrm{TempRange},\dots\bigr)
+\]  
+such that:
+
+\begin{enumerate}[label=P\arabic*]
+  \item \textbf{Correctness:} each numeric field equals the value printed in the authoritative datasheet.  
+  \item \textbf{Completeness:} mandatory fields are present; optional fields are \texttt{null} if not in the document.  
+  \item \textbf{Provenance:} every field carries evidence $(\text{page}, \text{bbox})$.  
+  \item \textbf{Latency:} average end-to-end processing time $<15$ s per QAF.  
+\end{enumerate}
+
+\subsection{Automation Requirements}
+Derived from the challenges and formal criteria, the target system must:
+
+\begin{enumerate}[label=R\arabic*]
+  \item \textbf{Robust MPN Extraction} – tolerate noise, multi-language descriptors, and embedded package codes.  
+  \item \textbf{Adaptive Retrieval} – combine distributor APIs and web search to maximise datasheet coverage while minimising failed downloads.  
+  \item \textbf{Multi-Modal Parsing} – handle tables, prose, and regulatory footnotes using a vision-language model.  
+  \item \textbf{Schema Validation} – enforce type, unit, and range checks; flag anomalies.  
+  \item \textbf{Traceability} – store page coordinates and raw snippets for audit.  
+  \item \textbf{Scalability} – process at least 3\,000 QAF lines per day on commodity cloud hardware.  
+\end{enumerate}
+
+
+\subsection{Mapping Challenges to Research Questions}
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Challenge} & \textbf{Requirement} & \textbf{Mapped RQ} \\\hline
+C1 & R1 & RQ1 \\
+C2 & R2 & RQ2 \\
+C3 & R3 & RQ3 \\
+C4 & R4,\;R5 & RQ3 (validation aspect) \\
+Performance & R6 & All RQs (latency+throughput) \\
+\end{tabular}
+\end{center}
+
+% Adjust numeric labels (P1–P4, R1–R6) or add more spec fields if needed.
+% Update citations once sources are chosen (e.g., OCR errors, datasheet parsing papers).
+
+This mapping clarifies how each experimental evaluation in later chapters directly addresses an identified pain point in BMW’s procurement workflow.

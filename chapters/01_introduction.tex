@@ -1,95 +1,53 @@
-% !TeX root = ../main.tex
-% Add the above to each chapter to make compiling the PDF easier in some editors.
+\section{Introduction}
+\label{sec:intro}
 
-\chapter{Introduction}\label{chapter:introduction}
+\subsection{Background}
+The digitalisation of automotive supply chains has accelerated in recent years, yet many data-critical workflows still depend on semi-structured documents and manual interpretation.  
+A prominent example at BMW is the \emph{Quotation Analysis Form}~(QAF), a file exchanged during supplier negotiations that lists part designations, preliminary prices, delivery conditions, and essential technical details.  
+Although QAFs frequently include an identifier that resembles a Manufacturer Part Number~(MPN), suppliers often embed the MPN inside longer descriptive strings or omit it altogether when quoting electrical characteristics.  
+Consequently, engineers must open each QAF line, detect or correct the MPN, locate the corresponding datasheet, and then copy individual specifications—such as maximum voltage or operating temperature—into BMW’s internal cost and qualification systems.  
+With several thousand parts assessed per programme phase, this \emph{ad-hoc} process consumes hundreds of engineer-hours and remains prone to transcription errors.
 
-\section{Section}
-Citation test~\parencite{latex}.
+\subsection{Problem Statement}
+Preliminary attempts to automate QAF processing relied on regular expressions or supplier-specific parsing templates.  
+Such approaches break when the supplier changes formatting, a datasheet link becomes unavailable, or unexpected language (e.\,g.\ German abbreviations) appears in the field.  
+Modern language models (LLMs) and vision-language models (VLMs) promise the ability to reason over diverse text and visual layouts, yet their raw outputs can be inconsistent and lack provenance.  
+A scalable solution must therefore \emph{coordinate multiple specialised tools}, recover gracefully from partial failures, and guarantee that extracted numeric values are plausible and traceable to the source document.
 
-Acronyms must be added in \texttt{main.tex} and are referenced using macros. The first occurrence is automatically replaced with the long version of the acronym, while all subsequent usages use the abbreviation.
+\subsection{Research Objectives}
+The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy QAF inputs into validated, structured component specifications.  
+To operationalise this goal, the work addresses three research questions:
 
-E.g. \texttt{\textbackslash ac\{TUM\}, \textbackslash ac\{TUM\}} $\Rightarrow$ \ac{TUM}, \ac{TUM}
+\begin{description}
+  \item[RQ1.] How accurately can a language-model agent extract correct MPNs from semi-structured QAF strings?
+  \item[RQ2.] Can cooperative retrieval agents—one using a distributor API, the other web search—achieve near-complete datasheet coverage while maintaining low latency?
+  \item[RQ3.] What precision and recall can a vision-language parsing agent attain on key electrical specifications, and how do schema-based validation rules affect overall data quality?
+\end{description}
 
-For more details, see the documentation of the \texttt{acronym} package\footnote{\url{https://ctan.org/pkg/acronym}}.
-\subsection{Subsection}
+\subsection{Proposed Approach}
+To answer these questions, the thesis proposes a modular pipeline whose agents each address a single sub-task:  
+\begin{enumerate}
+  \item An \textbf{MPN Extraction Agent} uses GPT-4 with prompt engineering and regex post-filters to isolate standardised identifiers from QAF text.  
+  \item Two \textbf{Retrieval Agents} query complementary sources: (i) the Octopart API for structured part metadata and (ii) a Google-backed web crawler prioritised by a cost-based heuristic that favours manufacturer domains.  
+  \item A \textbf{Parsing Agent} leverages GPT-4~Vision to read PDF datasheets and return JSON fields—voltage, current, power rating, and temperature range—together with bounding-box provenance.  
+  \item A \textbf{Validation Module} enforces JSON-Schema constraints and physical range rules and flags low-confidence extractions for manual review.  
+  \item Finally, a \textbf{Cost-Prediction Model} (gradient-boosted regression) is trained on the extracted specifications, demonstrating the economic value of the pipeline’s output.
+\end{enumerate}
 
-See~\autoref{tab:sample}, \autoref{fig:sample-drawing}, \autoref{fig:sample-plot}, \autoref{fig:sample-listing}.
+\subsection{Contribution}
+The thesis offers four concrete contributions:
+\begin{enumerate}
+  \item A fault-tolerant multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
+  \item An implementation evaluated on \textbf{1\,000} real BMW QAFs, including a manually annotated subset of 50–100 datasheets for ground-truth specification labels.  
+  \item Empirical benchmarks reporting MPN extraction accuracy, datasheet retrieval success, field-level precision/recall, and end-to-end latency.  
+  \item A downstream cost-prediction experiment showing that structured specs extracted by the system improve price-estimation accuracy, thus underlining direct business impact.
+\end{enumerate}
 
-\begin{table}[htpb]
-  \caption[Example table]{An example for a simple table.}\label{tab:sample}
-  \centering
-  \begin{tabular}{l l l l}
-    \toprule
-      A & B & C & D \\
-    \midrule
-      1 & 2 & 1 & 2 \\
-      2 & 3 & 2 & 3 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{figure}[htpb]
-  \centering
-  % This should probably go into a file in figures/
-  \begin{tikzpicture}[node distance=3cm]
-    \node (R0) {$R_1$};
-    \node (R1) [right of=R0] {$R_2$};
-    \node (R2) [below of=R1] {$R_4$};
-    \node (R3) [below of=R0] {$R_3$};
-    \node (R4) [right of=R1] {$R_5$};
-
-    \path[every node]
-      (R0) edge (R1)
-      (R0) edge (R3)
-      (R3) edge (R2)
-      (R2) edge (R1)
-      (R1) edge (R4);
-  \end{tikzpicture}
-  \caption[Example drawing]{An example for a simple drawing.}\label{fig:sample-drawing}
-\end{figure}
-
-\begin{figure}[htpb]
-  \centering
-
-  \pgfplotstableset{col sep=&, row sep=\\}
-  % This should probably go into a file in data/
-  \pgfplotstableread{
-    a & b    \\
-    1 & 1000 \\
-    2 & 1500 \\
-    3 & 1600 \\
-  }\exampleA
-  \pgfplotstableread{
-    a & b    \\
-    1 & 1200 \\
-    2 & 800 \\
-    3 & 1400 \\
-  }\exampleB
-  % This should probably go into a file in figures/
-  \begin{tikzpicture}
-    \begin{axis}[
-        ymin=0,
-        legend style={legend pos=south east},
-        grid,
-        thick,
-        ylabel=Y,
-        xlabel=X
-      ]
-      \addplot table[x=a, y=b]{\exampleA};
-      \addlegendentry{Example A}
-      \addplot table[x=a, y=b]{\exampleB};
-      \addlegendentry{Example B}
-    \end{axis}
-  \end{tikzpicture}
-  \caption[Example plot]{An example for a simple plot.}\label{fig:sample-plot}
-\end{figure}
-
-\begin{figure}[htpb]
-  \centering
-  \begin{tabular}{c}
-  \begin{lstlisting}[language=SQL]
-    SELECT * FROM tbl WHERE tbl.str = "str"
-  \end{lstlisting}
-  \end{tabular}
-  \caption[Example listing]{An example for a source code listing.}\label{fig:sample-listing}
-\end{figure}
+\subsection{Thesis Structure}
+The remainder of this document is organised as follows:  
+Section~\ref{sec:relatedwork} surveys literature on language-model agents, vision-language models, and document AI in procurement.  
+Section~\ref{sec:problem} formalises the challenges inherent to QAF processing.  
+Section~\ref{sec:architecture} details the proposed multi-agent architecture, while Section~\ref{sec:implementation} describes implementation specifics, including prompts, API wrappers, and validation logic.  
+Section~\ref{sec:evaluation} presents the experimental setup and quantitative results.  
+Section~\ref{sec:costmodel} demonstrates the downstream cost-modelling application.  
+Section~\ref{sec:discussion} reflects on limitations and industrial implications, and Section~\ref{sec:conclusion} concludes the thesis with avenues for future work.
