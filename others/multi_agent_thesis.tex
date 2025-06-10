@@ -1,0 +1,145 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\title{\textbf{Reliable Multi-Agent Systems for Automated Technical Data Acquisition and Validation}}
+\author{
+  Yange Zheng \\
+  Technical University of Munich \\
+  Supervisor: [Supervisor Name] (TUM) \\
+  Industry Supervisor: [Your Boss's Name] (BMW AG) \\
+  Thesis Advisor: [PhD Candidate's Name] (BMW AG \& TUM)
+}
+\date{Start Date: January 6, 2025 \\
+Submission Deadline: July 6, 2025}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Background and Industry Context}
+Global automotive manufacturers such as BMW rely on timely, accurate technical data when evaluating electronic components for new vehicle platforms.  
+A key artefact in this workflow is the \emph{Quotation Analysis Form}~(QAF), a semi-structured document submitted by suppliers that mixes free-text part descriptions, tentative prices, package options, and—often inconsistently—Manufacturer Part Numbers~(MPNs).  
+Because QAF layouts vary by supplier and project, automated ingestion has proved difficult; engineers still copy–paste identifiers, search the web for datasheets, and manually transcribe critical specifications into internal databases.  
+With thousands of parts assessed each month, the cumulative cost in engineer hours, delayed sourcing decisions, and downstream data errors is substantial.
+
+\subsection{Problem Statement}
+Current VBA and Python scripts at BMW handle isolated steps (e.\,g.\ basic web scraping) but fail when a field is missing, a datasheet URL changes, or the MPN is embedded inside noisy text.  
+Moreover, there is no unified mechanism to:  
+\begin{enumerate}
+  \item robustly extract a clean MPN from a free-text QAF line,
+  \item select the best data source among distributor APIs and web search results,
+  \item parse heterogeneous PDF datasheets into machine-readable form, and
+  \item verify that every extracted value is plausible and provenance-linked.
+\end{enumerate}
+The absence of such an end-to-end solution limits the scalability of data-driven cost estimation and component qualification.
+
+\subsection{Research Objectives and Questions}
+The overarching objective of this thesis is to design, implement, and evaluate a \emph{reliable multi-agent system} that converts noisy QAF inputs into validated, structured component specifications.  
+Concretely, the work addresses three research questions:
+
+\begin{description}
+  \item[RQ1:] How accurately can a language-model agent extract MPNs from semi-structured QAF text?
+  \item[RQ2:] How can multiple retrieval agents (distributor API, web search) be orchestrated to maximise datasheet coverage and minimise latency?
+  \item[RQ3:] What is the field-level precision and recall of a vision-language parsing agent, and how do validation rules affect overall data quality?
+\end{description}
+
+\subsection{Contributions}
+The thesis makes four practical contributions:
+\begin{enumerate}
+  \item A modular, fault-tolerant multi-agent architecture that coordinates language and vision models with external tools.
+  \item An implementation that integrates GPT-4–based MPN extraction, Octopart API queries, Google search scraping, vision-language PDF parsing, and JSON-schema validation.
+  \item A benchmark on 1\,000 real BMW QAF entries comprising metrics for MPN accuracy, datasheet retrieval success, and specification precision/recall.
+  \item A downstream regression model demonstrating that the extracted specifications improve component price prediction—highlighting direct business value.
+\end{enumerate}
+
+\subsection{Thesis Structure}
+The remainder of this document is organised as follows.  
+Section~\ref{sec:relatedwork} reviews language-model agents, vision-language models, and prior document-AI systems in procurement.  
+Section~\ref{sec:problem} formalises the data challenges inherent in QAF processing.  
+Section~\ref{sec:architecture} details the multi-agent design, while Section~\ref{sec:implementation} discusses implementation specifics such as prompt engineering and API integration.  
+Section~\ref{sec:evaluation} presents the experimental setup and results, and Section~\ref{sec:costmodel} evaluates the downstream cost-prediction model.  
+Section~\ref{sec:discussion} analyses limitations and industrial implications.  
+Finally, Section~\ref{sec:conclusion} concludes the thesis and outlines future research directions.
+
+
+\section{Related Work}
+\begin{itemize}
+  \item Language model agents and tool use (ReAct, LangChain)
+  \item Vision-language models for document understanding
+  \item Multi-agent architectures in applied AI
+  \item Document AI in procurement and engineering contexts
+\end{itemize}
+
+\section{Problem Setting}
+\begin{itemize}
+  \item Characteristics of QAFs (Quotation Analysis Forms)
+  \item Challenges in MPN extraction and data heterogeneity
+  \item Requirements for robustness, reliability, and validation
+\end{itemize}
+
+\section{System Architecture}
+\begin{itemize}
+  \item Overview of the multi-agent framework
+  \item Agent roles: MPN extractor, retrieval (API + web), parser, validator
+  \item Coordination strategy and tool integration (function-calling, fallback)
+  \item Agent communication and memory structure
+\end{itemize}
+
+\section{Implementation}
+\begin{itemize}
+  \item LLM prompt design for MPN extraction
+  \item Integration of Octopart API and Google-based datasheet search
+  \item VLM (GPT-4 Vision) for PDF parsing and structured spec output
+  \item Schema validation and provenance tracking
+  \item Logging, metrics collection, and error handling
+\end{itemize}
+
+\section{Evaluation}
+\begin{itemize}
+  \item Dataset: 1,000 real QAFs, annotated spec samples (50--100)
+  \item Metrics: MPN accuracy, spec precision/recall, latency, task success
+  \item Evaluation setup and agent benchmarking
+  \item Failure analysis and qualitative examples
+\end{itemize}
+
+\section{Downstream Application: Cost Modeling}
+\begin{itemize}
+  \item Feature engineering from extracted specs
+  \item Regression model (e.g., XGBoost or linear) for price prediction
+  \item Evaluation metrics (R\textsuperscript{2}, MAE)
+  \item Interpretation and practical implications
+\end{itemize}
+
+\section{Discussion}
+\begin{itemize}
+  \item System performance summary
+  \item Strengths and limitations of the current architecture
+  \item Potential for integration into BMW workflows
+  \item Reflection on data quality and generalizability
+\end{itemize}
+
+\section{Conclusion and Future Work}
+\begin{itemize}
+  \item Summary of contributions
+  \item Key results and insights
+  \item Future extensions: human-in-the-loop validation, feedback learning
+\end{itemize}
+
+\appendix
+\section*{Appendices}
+\begin{itemize}
+  \item Example QAF inputs and outputs
+  \item Annotation schema for specs
+  \item Prompt templates and API call examples
+  \item Full experimental results and error logs
+\end{itemize}
+
+\end{document}

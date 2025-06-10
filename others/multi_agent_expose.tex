@@ -1,0 +1,118 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{hyperref}
+
+\title{\textbf{Exposé – Master’s Thesis}\\Reliable Multi-Agent Systems for Automated Technical Data Acquisition and Validation}
+\author{Yange Zheng\\Technical University of Munich\\In collaboration with BMW AG}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Motivation}
+In industrial procurement, engineers often work with \textbf{Quotation Analysis Forms (QAFs)} provided by suppliers—semi-structured documents containing part descriptions, electrical specifications, and inconsistent identifiers. While Manufacturer Part Numbers (MPNs) are typically present, they are often embedded in noisy text alongside other attributes, making reliable extraction and interpretation difficult. Automating the full pipeline—from QAF to datasheet to validated component specifications—requires coordinating diverse tools: language models, web search, document parsing, and schema validation. Rigid scripts and monolithic workflows tend to break in the face of data variation or missing fields. This thesis addresses that gap by designing a \textbf{modular multi-agent system} where each agent specializes in one task (e.g., MPN extraction, datasheet retrieval, VLM parsing), enabling flexible, fault-tolerant, and interpretable orchestration across real-world data acquisition scenarios.
+
+\section*{Objective}
+The objective of this thesis is to design, implement, and evaluate a modular multi-agent system that transforms semi-structured procurement inputs into validated, structured technical specifications. Each agent performs a specialized sub-task—from MPN extraction to datasheet retrieval, parsing, and validation—using LLMs, tool calls, and schema-based reasoning. The system is benchmarked on real Quotation Analysis Forms (QAFs) provided by BMW.
+
+
+\section*{Approach}
+The architecture consists of several specialized agents that cooperate to complete the pipeline:
+\begin{itemize}
+  \item \textbf{MPN Extraction Agent:} Uses an LLM to extract Manufacturer Part Numbers from noisy QAF text.
+  \item \textbf{Retrieval Agent (Web):} Searches for matching datasheets online (e.g., via Google) and  ranks results and data sources based on reliability.
+  \item \textbf{Retrieval Agent (API):} Queries distributor APIs such as Octopart to retrieve structured component data or datasheet links, and integrates the results with other sources.
+  \item \textbf{Parsing Agent:} Applies a vision-language model (e.g., GPT-4 Vision) to extract key fields such as voltage, power rating, and temperature from PDF datasheets.
+  \item \textbf{Validation Module:} Applies schema checks, range constraints, and source provenance to ensure correctness and completeness.
+  \item \textbf{Cost Model (Downstream):} A regression model is trained using extracted specs to predict component prices, demonstrating the utility of the pipeline outputs.
+\end{itemize}
+
+
+\section*{Planned Work}
+\begin{itemize}
+  \item Implement a modular multi-agent system using function-calling and memory-sharing mechanisms
+  \item Integrate distributor API agent (e.g., Octopart) for structured data retrieval
+  \item Evaluate MPN extraction accuracy using real QAF examples from BMW
+  \item Benchmark spec-level precision and recall on 50–100 manually verified datasheet samples
+  \item Train and evaluate a regression model to predict component prices from extracted specifications
+  \item Analyze system performance in terms of extraction success, latency, and failure types
+  \item Complete thesis documentation, results presentation, and defense preparation
+\end{itemize}
+
+
+\section*{Expected Contributions}
+\begin{itemize}
+  \item A modular multi-agent system for extracting validated component specifications from semi-structured supplier inputs
+  \item An integrated pipeline combining LLMs, web search, APIs, and vision-language models for real-world data acquisition
+  \item Benchmarked performance on BMW supplier data, with metrics for extraction accuracy, latency, and robustness
+  \item A downstream cost prediction model demonstrating the utility of the extracted data
+  \item A scalable framework for future integration into data-driven sourcing and procurement workflows
+\end{itemize}
+
+
+
+\section*{Supervision}
+\begin{itemize}
+  \item \textbf{Academic Examiner:} Prof. Viktor Leis, Technical University of Munich
+  \item \textbf{Industry Supervisor:} Alexander Schiffmacher, BMW AG
+  \item \textbf{Thesis Advisor:} Joe Yu, BMW AG \& Technical University of Munich
+\end{itemize}
+
+
+\section*{Time Schedule}
+
+\begin{tabular}{ll}
+\textbf{Period (2025)} & \textbf{Milestones / Tasks} \\
+\hline
+Jan 6 – Jan 19     & Literature review, define goals and evaluation metrics \\
+Jan 20 – Feb 9     & Implement MPN extraction agent and benchmark on QAFs \\
+Feb 10 – Mar 2     & Build datasheet retrieval agents (API + web search) \\
+Mar 3 – Mar 23     & Integrate VLM-based parsing and JSON schema validation \\
+Mar 24 – Apr 6     & Create ground truth dataset for spec accuracy (50–100 samples) \\
+Apr 7 – Apr 20     & Evaluate full system: accuracy, latency, robustness \\
+Apr 21 – May 4     & Train and evaluate cost prediction model \\
+May 5 – May 25     & Write thesis: system, results, and analysis \\
+May 26 – Jun 8     & Final experiments, visualization, report polishing \\
+Jun 9 – Jun 22     & Submit draft, receive supervisor feedback \\
+Jun 23 – Jul 6     & Final revisions and defense preparation \\
+\end{tabular}
+
+
+\section*{Thesis Outline}
+
+\begin{enumerate}
+  \item \textbf{Introduction} \\
+  Motivation, initial situation, objectives, and scope
+
+  \item \textbf{Related Work} \\
+  Overview of LLM agents, vision-language models, document AI, and industrial data extraction systems
+
+  \item \textbf{Problem Setting} \\
+  Characteristics of QAFs, challenges with semi-structured procurement data, and requirements for automation
+
+  \item \textbf{System Architecture} \\
+  Design of the multi-agent framework, agent roles, tool integration, and coordination strategy
+
+  \item \textbf{Implementation} \\
+  Practical realization of agents (MPN extraction, API/web retrieval, VLM parsing, validation), tool wrappers, and pipelines
+
+  \item \textbf{Evaluation} \\
+  Experimental setup, benchmarks for MPN accuracy, spec precision/recall, system latency, and failure analysis
+
+  \item \textbf{Downstream Application} \\
+  Use of extracted specs in a regression model to predict component prices, validating data quality and utility
+
+  \item \textbf{Discussion} \\
+  Interpretation of results, system limitations, and opportunities for improvement
+
+  \item \textbf{Conclusion and Future Work} \\
+  Summary of findings and suggestions for extensions (e.g., feedback learning, human-in-the-loop validation)
+
+  \item \textbf{Appendices} \\
+  Sample QAF entries, annotated specs, evaluation logs, tool interfaces
+\end{enumerate}
+
+
+
+\end{document}
