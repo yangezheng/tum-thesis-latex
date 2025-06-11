@@ -1,6 +1,5 @@
-%--------------------------------------------------
-\section{System Architecture}
-\label{sec:architecture}
+\chapter{System Architecture}
+\label{chapter:architecture}
 
 % Usage Instructions
 % Insert this code in place of your current \section{System Architecture} placeholder.
@@ -13,46 +12,46 @@
 
 This chapter describes the overall design of the proposed multi-agent pipeline, the responsibilities of each agent, their communication strategy, and the supporting infrastructure for storage, logging, and fault-recovery.
 
-\subsection{High-Level Overview}
+\section{High-Level Overview}
 
 Figure~\ref{fig:architecture} illustrates the data flow from a raw QAF line to a validated specification record and a downstream cost prediction.  
 Each rectangular node represents an autonomous agent implemented as a function-calling wrapper around a large language model (LLM) or vision-language model (VLM).  
 Solid arrows indicate the primary execution path, while dashed arrows represent feedback loops used for retries and validation.
 
-\begin{figure}[ht]
-  \centering
-  \begin{tikzpicture}[%
-    node distance=1.7cm,
-    io/.style={rectangle, rounded corners=2pt, draw, align=center, minimum width=2.8cm, minimum height=1cm, font=\small},
-    agent/.style={rectangle, draw, rounded corners=3pt, fill=blue!6, minimum width=3.7cm, minimum height=1.1cm, font=\small},
-    datastore/.style={cylinder, draw, fill=gray!10, minimum height=1.1cm, minimum width=2cm, font=\small},
-    every node/.style={font=\small}
-  ]
-    \node[io] (qaf) {QAF entry \\ (raw text)};
-    \node[agent, right=of qaf] (mpn) {MPN\\Extraction\\Agent};
-    \node[agent, right=of mpn] (api) {Retrieval\\Agent\\(Octopart API)};
-    \node[agent, below=of api] (web) {Retrieval\\Agent\\(Web search)};
-    \node[agent, right=of api] (parser) {Parsing\\Agent\\(VLM)};
-    \node[agent, right=of parser] (validator) {Validation\\Module};
-    \node[datastore, right=of validator] (db) {Spec DB};
-    \node[agent, below=of validator] (cost) {Cost\\Model};
+% \begin{figure}[ht]
+%   \centering
+%   \begin{tikzpicture}[%
+%     node distance=1.7cm,
+%     io/.style={rectangle, rounded corners=2pt, draw, align=center, minimum width=2.8cm, minimum height=1cm, font=\small},
+%     agent/.style={rectangle, draw, rounded corners=3pt, fill=blue!6, minimum width=3.7cm, minimum height=1.1cm, font=\small},
+%     datastore/.style={cylinder, draw, fill=gray!10, minimum height=1.1cm, minimum width=2cm, font=\small},
+%     every node/.style={font=\small}
+%   ]
+%     \node[io] (qaf) {QAF entry \\ (raw text)};
+%     \node[agent, right=of qaf] (mpn) {MPN\\Extraction\\Agent};
+%     \node[agent, right=of mpn] (api) {Retrieval\\Agent\\(Octopart API)};
+%     \node[agent, below=of api] (web) {Retrieval\\Agent\\(Web search)};
+%     \node[agent, right=of api] (parser) {Parsing\\Agent\\(VLM)};
+%     \node[agent, right=of parser] (validator) {Validation\\Module};
+%     \node[datastore, right=of validator] (db) {Spec DB};
+%     \node[agent, below=of validator] (cost) {Cost\\Model};
     
-    % arrows
-    \draw[->] (qaf) -- (mpn);
-    \draw[->] (mpn) -- node[above]{MPN}(api);
-    \draw[->] (mpn) |- (web);
-    \draw[->] (api) -- (parser);
-    \draw[->] (web) -| (parser);
-    \draw[->] (parser) -- (validator);
-    \draw[->] (validator) -- (db);
-    \draw[->, dashed] (validator.west) -- ++(-0.8,0) |- node[left]{retry / fallback}(web.south);
-    \draw[->] (validator) -- (cost);
-  \end{tikzpicture}
-  \caption{End-to-end architecture of the multi-agent pipeline.}
-  \label{fig:architecture}
-\end{figure}
+%     % arrows
+%     \draw[->] (qaf) -- (mpn);
+%     \draw[->] (mpn) -- node[above]{MPN}(api);
+%     \draw[->] (mpn) |- (web);
+%     \draw[->] (api) -- (parser);
+%     \draw[->] (web) -| (parser);
+%     \draw[->] (parser) -- (validator);
+%     \draw[->] (validator) -- (db);
+%     \draw[->, dashed] (validator.west) -- ++(-0.8,0) |- node[left]{retry / fallback}(web.south);
+%     \draw[->] (validator) -- (cost);
+%   \end{tikzpicture}
+%   \caption{End-to-end architecture of the multi-agent pipeline.}
+%   \label{fig:architecture}
+% \end{figure}
 
-\subsection{Agent Responsibilities}
+\section{Agent Responsibilities}
 \paragraph{MPN Extraction Agent}  
 Receives a raw QAF string and applies a few-shot GPT-4 prompt that asks the model to return a JSON object with the most likely manufacturer part number.  
 A lightweight post-processor removes package suffixes (e.\,g.\ “‐TR”) and checks against a regex whitelist of vendor prefixes.
@@ -64,7 +63,7 @@ If the API returns \verb|datasheets| with a direct PDF link and the file size is
 \paragraph{Retrieval Agent (Web)}  
 Uses Playwright to perform a Google search of the form  
 \texttt{\{MPN\} datasheet filetype:pdf}.  
-Results are scored by the reliability heuristic in Equation~\eqref{eq:heuristic}.  
+% Results are scored by the reliability heuristic in Equation~\eqref{eq:heuristic}.  
 The top-3 PDFs are downloaded for validation.
 
 \paragraph{Parsing Agent}  
@@ -72,17 +71,17 @@ Given a PDF path, calls GPT-4 Vision with a chain-of-thought template: first sum
 
 \paragraph{Validation Module}  
 Executes three layers of checks:
-\begin{enumerate*}
+\begin{enumerate}
   \item JSON-Schema validation (types + units),
-  \item range rules (e.\,g.\ $0 < V_\text{max} < 1000\,\text{V}$),
+  \item range rules (e.\,g.\ $0 < V_{max} < 1000V$),
   \item duplicate consistency (table vs. paragraph vs. Octopart value).
-\end{enumerate*}  
+\end{enumerate}  
 Failures trigger a dashed feedback edge to the Web Retrieval Agent for retry.
 
 \paragraph{Cost Model}  
 Trains an XGBoost regressor on validated specs + historical SAP prices to demonstrate the economic relevance of the structured output.
 
-\subsection{Agent Coordination and Memory}
+\section{Agent Coordination and Memory}
 Agents communicate via the LangChain executor, which offers:  
 \begin{itemize}
   \item \textbf{Function-calling interface}: each agent exposes a JSON schema; GPT-4 picks the correct function based on the task.  
@@ -90,7 +89,7 @@ Agents communicate via the LangChain executor, which offers:
   \item \textbf{Retry Logic}: a decorator intercepts exceptions, waits exponentially (1 s, 2 s, 4 s), and reroutes control to the fallback agent if attempts $>3$.
 \end{itemize}
 
-\subsection{Source Ranking Heuristic}
+\section{Source Ranking Heuristic}
 For every candidate PDF URL $u$, the cost score is computed as
 \begin{equation}
 \label{eq:heuristic}
@@ -100,19 +99,19 @@ where \(\mathrm{domain}=0\) for manufacturer sites, 1 for trusted distributors, 
 \(\mathrm{pdfWeight}=0\) if the URL ends with \texttt{.pdf}, else 1;  
 and \(\mathrm{failRate}\) is an exponentially decayed average of previous download failures from the same host.
 
-\subsection{Data Storage and Logging}
+\section{Data Storage and Logging}
 Validated JSON records are written to a PostgreSQL table with columns for \verb|mpn|, \verb|spec_json| (JSONB), \verb|provenance| (JSONB), and an Azure Blob link to the PDF.  
 OpenTelemetry traces (agent name, latency, token usage) are exported to Grafana for live monitoring.
 
-\subsection{Fault Tolerance}
+\section{Fault Tolerance}
 If both retrieval agents fail, the system stores a \verb|status = "unresolved"| entry for manual triage.  
 Parsing errors with low OCR confidence ($<0.7$) raise a warning but still save partially validated fields, ensuring \emph{at-least-once} data capture.
 
-\subsection{Security and Cost Considerations}
+\section{Security and Cost Considerations}
 All external calls pass through BMW’s outbound proxy; API secrets are managed via Azure Key Vault.  
 Estimated operating cost on an Azure D8s~v5 VM plus one A10 GPU is \(\approx 0.90\,€\) per 1 000 processed QAF lines, dominated by GPT-4 Vision tokens.
 
-\subsection{Mapping to Requirements}
+\section{Mapping to Requirements}
 Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{sec:problem}.
 
 \begin{table}[ht]

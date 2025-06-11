@@ -1,24 +1,24 @@
-\section{Related Work}
-\label{chapter:relatedwork}
+\chapter{Related Work}\label{chapter:relatedwork}
+
 
 This chapter surveys prior research relevant to the proposed multi-agent pipeline, grouped into four areas: (i) tool-using language-model agents, (ii) vision-language models for document understanding, (iii) multi-agent orchestration frameworks, and (iv) document-AI applications in procurement and engineering.
 
 %--------------------------------------------------
-\subsection{Tool-Using Language-Model Agents}
+\section{Tool-Using Language-Model Agents}
 Large language models have been extended with \emph{tool use} capabilities to overcome context-length limits and provide up-to-date information.  
 ReAct~\cite{yao2023react} interleaves chain-of-thought reasoning with executable actions, while the OpenAI function-calling interface popularised structured tool invocation in production systems.  
 LangChain\footnote{\url{https://www.langchain.com}} offers an open-source abstraction layer for wrapping external tools (APIs, SQL, web search) behind LLM calls.  
 AutoGPT and Voyager~\cite{wang2023voyager} push autonomy further but lack guarantees on reliability—highlighting the need for validation mechanisms such as those proposed in this thesis.
 
 %--------------------------------------------------
-\subsection{Vision-Language Models for Document Understanding}
+\section{Vision-Language Models for Document Understanding}
 Document AI has progressed from OCR-centric pipelines to transformer-based models that combine layout and text.  
 LayoutLMv3~\cite{xuhuang2022layoutlmv3}, DocPrompting~\cite{li2023docprompt}, and StrucTexT~\cite{li2021structext} incorporate visual and spatial cues for table extraction.  
 Recent work extends general VLMs (BLIP-2, GPT-4 Vision) to technical documents, but evaluation on complex engineering datasheets remains limited.  
 Our parsing agent adopts GPT-4 Vision and focuses on reliability and schema-validated output rather than raw captioning.
 
 %--------------------------------------------------
-\subsection{Multi-Agent Orchestration Frameworks}
+\section{Multi-Agent Orchestration Frameworks}
 Early agent systems in NLP used finite-state controllers; recent research revisits \emph{LLM-driven} agents.  
 MetaGPT~\cite{hong2023metagpt} assigns specialised roles (product manager, engineer) to different LLM instances.  
 CrewAI\footnote{\url{https://github.com/joaomdmoura/crewAI}} and OpenAI’s “Assistants” API provide abstractions for role-based coordination.  
@@ -26,14 +26,14 @@ Most studies focus on qualitative demos; quantitative benchmarks on noisy indust
 Our work contributes empirical results on orchestration efficacy (success, latency) in a production-grade setting.
 
 %--------------------------------------------------
-\subsection{Document-AI in Procurement and Engineering}
+\section{Document-AI in Procurement and Engineering}
 Prior industry case studies address invoice OCR, purchase-order matching, and part catalogue normalisation~\cite{chung2020invoiceai, koch2022bom}.  
-Datasheet processing is typically rule-based or limited to text segments~\cite{rahman2021datasheet}.  
-To our knowledge, no published system handles the complete \emph{QAF → datasheet → validated spec} loop using modern LLM / VLM techniques.  
+Datasheet processing is typically rule-based or limited to text segments~\cite{rahman2021datasheet}.
+% To our knowledge, no published system handles the complete \emph{QAF -> datasheet -> validated spec} loop using modern LLM / VLM techniques.
 This thesis fills that gap and releases a benchmark on 1 000 QAFs to foster reproducible research.
 
 %--------------------------------------------------
-\subsection{Research Gap}
+\section{Research Gap}
 \begin{itemize}
   \item Existing LLM agents excel in controlled benchmarks but lack validation and provenance when applied to safety-critical engineering data.
   \item VLMs demonstrate impressive captioning accuracy yet are rarely evaluated on fine-grained numeric specs inside technical PDFs.

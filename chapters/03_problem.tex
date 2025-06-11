@@ -1,7 +1,7 @@
-\section{Problem Setting}
-\label{sec:problem}
+\chapter{Problem Setting}
+\label{chapter:problem}
 
-\subsection{Characteristics of Quotation Analysis Forms (QAFs)}
+\section{Characteristics of Quotation Analysis Forms (QAFs)}
 A Quotation Analysis Form (QAF) is a semi-structured document exchanged during early supplier negotiations.  
 At BMW, QAFs appear in multiple digital formats—CSV exports, Excel sheets, and supplier-specific PDF templates.  
 Typical fields include:  
@@ -16,7 +16,7 @@ Typical fields include:
 The absence of a universal schema means column order, header names, and punctuation vary widely across suppliers.  
 Furthermore, multilingual notations (``Gehäuse'', ``Temp. Bereich'') complicate rule-based parsing.
 
-\subsection{Core Challenges}
+\section{Core Challenges}
 \paragraph{C1: Inconsistent Identifier Extraction}  
 An MPN may be surrounded by package codes (``\texttt{-TR}''), voltage values, or marketing text, making pattern-matching unreliable.  
 Example:  
@@ -42,7 +42,7 @@ Standard OCR engines often split rows or mis-align columns, reducing extraction 
 Classic table-extraction pipelines output values without units or context.  
 For safety-critical components, engineers must know \emph{where} a value came from (page and bounding box) and whether it respects physical constraints (e.\,g., voltage $>$ 0).
 
-\subsection{Formal Problem Definition}
+\section{Formal Problem Definition}
 Let $q \in \mathcal{Q}$ denote a single QAF entry containing noisy text tokens.  
 The task is to compute a validated specification record  
 \[
@@ -50,17 +50,17 @@ The task is to compute a validated specification record
 \]  
 such that:
 
-\begin{enumerate}[label=P\arabic*]
-  \item \textbf{Correctness:} each numeric field equals the value printed in the authoritative datasheet.  
+\begin{enumerate}
+  \item \textbf{Correctness:} each numeric field equals the value printed in the authoritative datasheet.
   \item \textbf{Completeness:} mandatory fields are present; optional fields are \texttt{null} if not in the document.  
-  \item \textbf{Provenance:} every field carries evidence $(\text{page}, \text{bbox})$.  
+  \item \textbf{Provenance:} every field carries evidence page, bbox.  
   \item \textbf{Latency:} average end-to-end processing time $<15$ s per QAF.  
 \end{enumerate}
 
-\subsection{Automation Requirements}
+\section{Automation Requirements}
 Derived from the challenges and formal criteria, the target system must:
 
-\begin{enumerate}[label=R\arabic*]
+\begin{enumerate}
   \item \textbf{Robust MPN Extraction} – tolerate noise, multi-language descriptors, and embedded package codes.  
   \item \textbf{Adaptive Retrieval} – combine distributor APIs and web search to maximise datasheet coverage while minimising failed downloads.  
   \item \textbf{Multi-Modal Parsing} – handle tables, prose, and regulatory footnotes using a vision-language model.  
@@ -70,7 +70,7 @@ Derived from the challenges and formal criteria, the target system must:
 \end{enumerate}
 
 
-\subsection{Mapping Challenges to Research Questions}
+\section{Mapping Challenges to Research Questions}
 \begin{center}
 \begin{tabular}{lll}
 \textbf{Challenge} & \textbf{Requirement} & \textbf{Mapped RQ} \\\hline
