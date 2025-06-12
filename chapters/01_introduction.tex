@@ -1,5 +1,6 @@
 \chapter{Introduction}\label{chapter:introduction}
 
+%--------------------------------------------------
 \begin{figure}[H]
   \centering
   \fbox{\begin{minipage}{0.95\textwidth}
@@ -20,6 +21,7 @@ As shown in Figure~\ref{fig:qaf-line-example}, QAF lines typically appear as uns
 Consequently, engineers must manually inspect each line, identify or correct the MPN, locate the corresponding datasheet, and extract key specifications—such as maximum voltage or operating temperature—for input into BMW’s internal cost and qualification systems.  
 With several thousand parts assessed per program phase, this \emph{ad hoc} process consumes hundreds of engineer-hours and remains susceptible to transcription errors.
 
+%--------------------------------------------------
 \section{Problem Statement \ding{44}}
 Previous attempts to automate QAF processing primarily relied on regular expressions to extract Manufacturer Part Numbers~(MPNs) from raw supplier text.  
 While effective in narrowly defined cases, these approaches were brittle---minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently caused extraction to fail.  
@@ -27,6 +29,7 @@ A further limitation was ambiguity: when the regular expression returned a null 
 To address these issues, large language models~(LLMs) offer a more robust alternative.  
 By reasoning over free-form text and recognizing contextual cues, LLMs can identify MPNs even when they are embedded in descriptive strings or surrounded by supplier-specific notations.
 
+%--------------------------------------------------
 \section{Research Objectives \ding{44}}
 The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy QAF inputs into validated, structured component specifications.  
 To operationalise this goal, the work addresses three research questions:
@@ -37,6 +40,7 @@ To operationalise this goal, the work addresses three research questions:
   \item[RQ3.] What precision and recall can a vision-language parsing agent attain on key electrical specifications?
 \end{description}
 
+%--------------------------------------------------
 \section{Proposed Approach \ding{44}}
 To answer these questions, the thesis proposes a modular pipeline whose agents each address a single sub-task:  
 \begin{enumerate}
@@ -50,6 +54,7 @@ To answer these questions, the thesis proposes a modular pipeline whose agents e
   \item Finally, a \textbf{Cost-Prediction Model} is trained on the extracted specifications, demonstrating the economic value of the pipeline’s output.
 \end{enumerate}
 
+%--------------------------------------------------
 \section{Contribution \ding{44}}
 The thesis offers four concrete contributions:
 \begin{enumerate}
@@ -58,6 +63,7 @@ The thesis offers four concrete contributions:
   \item A downstream cost-prediction experiment showing that structured specs extracted by the system improve price-estimation accuracy, thus underlining direct business impact.
 \end{enumerate}
 
+%--------------------------------------------------
 \section{Thesis Structure \ding{44}}
 The remainder of this document is organised as follows:  
 Chapter~\ref{chapter:relatedwork} surveys literature on language-model agents, vision-language models, and document AI in procurement.  

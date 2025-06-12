@@ -9,33 +9,74 @@ Large language models have been extended with \emph{tool use} capabilities to ov
 ReAct~\cite{yao2023react} interleaves chain-of-thought reasoning with executable actions, while the OpenAI function-calling interface popularised structured tool invocation in production systems.  
 LangChain\footnote{\url{https://www.langchain.com}} offers an open-source abstraction layer for wrapping external tools (APIs, SQL, web search) behind LLM calls.  
 AutoGPT and Voyager~\cite{wang2023voyager} push autonomy further but lack guarantees on reliability—highlighting the need for validation mechanisms such as those proposed in this thesis.
+\subsection{Origins of Tool Use in LLMs}
+\subsection{ReAct-style Reasoning + Acting}
+\subsection{Structured Function-Calling Interfaces}
+\subsection{Autonomous \& Memory-Augmented Agents}
 
 %--------------------------------------------------
-\section{Vision-Language Models for Document Understanding}
-Document AI has progressed from OCR-centric pipelines to transformer-based models that combine layout and text.  
-LayoutLMv3~\cite{xuhuang2022layoutlmv3}, DocPrompting~\cite{li2023docprompt}, and StrucTexT~\cite{li2021structext} incorporate visual and spatial cues for table extraction.  
-Recent work extends general VLMs (BLIP-2, GPT-4 Vision) to technical documents, but evaluation on complex engineering datasheets remains limited.  
-Our parsing agent adopts GPT-4 Vision and focuses on reliability and schema-validated output rather than raw captioning.
+\section{Vision–Language Models for Document Understanding}
+Document–analysis research has evolved through three overlapping stages:  
+(1) \emph{rule- and library-based PDF parsing},  
+(2) \emph{layout-aware pre-trained transformers}, and  
+(3) \emph{large multimodal LLMs}.  
+We review each strand and position our work in the third.
+
+\subsection{Rule- and Library-Based PDF Parsing}
+Early pipelines extracted text and tables using Python libraries such as
+\texttt{PDFMiner}, \texttt{PyPDF2}, \texttt{pdfplumber}, and
+\texttt{Camelot}/\texttt{Tabula}.%
+\footnote{See project pages: \url{https://github.com/pdfminer/pdfminer.six},
+\url{https://github.com/py-pdf/pypdf}, etc.}  
+Domain practitioners layered regular expressions, heuristic column detection,
+and X-Y–coordinate clustering on these low-level primitives.
+While effective for homogeneous reports or invoices, such systems break on
+
+\begin{enumerate}
+  \item multi-column datasheets with mixed units,
+  \item vendor-specific typographic quirks (rotated headers, unusual glyphs),
+  \item text embedded inside nested tables or header/footer bands, and
+  \item heterogeneous page layouts within a single file.
+\end{enumerate}
+
+They also provide no learned representation of visual context, forcing every
+format change to be patched manually.
+
+\subsection{Layout-Aware Pre-training}
+Transformer encoders that ingest token embeddings augmented with 2-D
+coordinates alleviate fragile heuristics.
+LayoutLMv3~\cite{xuhuang2022layoutlmv3} unifies text, layout, and image
+patches; StrucTexT~\cite{li2021structext} adds contrastive pre-training for
+table structure.
+These models excel on benchmarks such as FUNSD and RVL-CDIP, yet published
+studies seldom target engineering datasheets whose key attributes are numeric
+ranges buried in dense specification tables.
+
+\subsection{Large Multimodal LLMs}
+General-purpose Llama3, Gemini, and GPT-4 Vision—combine a frozen vision
+encoder with a large language model, enabling open-vocabulary reasoning across
+arbitrary documents.
+Although early demonstrations highlight science articles and receipts,
+rigorous evaluation on \emph{technical component datasheets} is scarce.
+Our work fills this gap: a GPT-4 Vision–based \textbf{Parsing Agent} is
+prompt-engineered to output \emph{schema-validated JSON} containing technical parameters.
+This focus on reliability contrasts with prior VLM
+applications that prioritise free-form captioning or QA.
+
 
 %--------------------------------------------------
 \section{Multi-Agent Orchestration Frameworks}
-Early agent systems in NLP used finite-state controllers; recent research revisits \emph{LLM-driven} agents.  
 MetaGPT~\cite{hong2023metagpt} assigns specialised roles (product manager, engineer) to different LLM instances.  
 CrewAI\footnote{\url{https://github.com/joaomdmoura/crewAI}} and OpenAI’s “Assistants” API provide abstractions for role-based coordination.  
 Most studies focus on qualitative demos; quantitative benchmarks on noisy industrial tasks, such as QAF processing, are scarce.  
-Our work contributes empirical results on orchestration efficacy (success, latency) in a production-grade setting.
+Our work contributes empirical results on orchestration efficacy (success) in a production-grade setting.
 
-%--------------------------------------------------
-\section{Document-AI in Procurement and Engineering}
-Prior industry case studies address invoice OCR, purchase-order matching, and part catalogue normalisation~\cite{chung2020invoiceai, koch2022bom}.  
-Datasheet processing is typically rule-based or limited to text segments~\cite{rahman2021datasheet}.
-% To our knowledge, no published system handles the complete \emph{QAF -> datasheet -> validated spec} loop using modern LLM / VLM techniques.
-This thesis fills that gap and releases a benchmark on 1 000 QAFs to foster reproducible research.
-
+\subsection{AutoGen}
+\subsection{CrewAI}
+\subsection{Langgraph}
 %--------------------------------------------------
 \section{Research Gap}
 \begin{itemize}
-  \item Existing LLM agents excel in controlled benchmarks but lack validation and provenance when applied to safety-critical engineering data.
   \item VLMs demonstrate impressive captioning accuracy yet are rarely evaluated on fine-grained numeric specs inside technical PDFs.
   \item No prior work jointly optimises extraction \emph{and} downstream business value (e.g.\ cost prediction) within an end-to-end industrial pipeline.
 \end{itemize}
