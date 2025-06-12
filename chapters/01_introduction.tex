@@ -20,46 +20,49 @@ As shown in Figure~\ref{fig:qaf-line-example}, QAF lines typically appear as uns
 Consequently, engineers must manually inspect each line, identify or correct the MPN, locate the corresponding datasheet, and extract key specifications—such as maximum voltage or operating temperature—for input into BMW’s internal cost and qualification systems.  
 With several thousand parts assessed per program phase, this \emph{ad hoc} process consumes hundreds of engineer-hours and remains susceptible to transcription errors.
 
-\section{Problem Statement}
-Preliminary attempts to automate QAF processing relied on regular expressions or supplier-specific parsing templates.  
-Such approaches break when the supplier changes formatting, a datasheet link becomes unavailable, or unexpected language (e.\,g.\ German abbreviations) appears in the field.  
-Modern language models (LLMs) and vision-language models (VLMs) promise the ability to reason over diverse text and visual layouts, yet their raw outputs can be inconsistent and lack provenance.  
-A scalable solution must therefore \emph{coordinate multiple specialised tools}, recover gracefully from partial failures, and guarantee that extracted numeric values are plausible and traceable to the source document.
+\section{Problem Statement \ding{44}}
+Previous attempts to automate QAF processing primarily relied on regular expressions to extract Manufacturer Part Numbers~(MPNs) from raw supplier text.  
+While effective in narrowly defined cases, these approaches were brittle---minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently caused extraction to fail.  
+A further limitation was ambiguity: when the regular expression returned a null result, it was unclear whether no MPN was present or if the pattern simply failed to match a valid one.  
+To address these issues, large language models~(LLMs) offer a more robust alternative.  
+By reasoning over free-form text and recognizing contextual cues, LLMs can identify MPNs even when they are embedded in descriptive strings or surrounded by supplier-specific notations.
 
-\section{Research Objectives}
+\section{Research Objectives \ding{44}}
 The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy QAF inputs into validated, structured component specifications.  
 To operationalise this goal, the work addresses three research questions:
 
 \begin{description}
   \item[RQ1.] How accurately can a language-model agent extract correct MPNs from semi-structured QAF strings?
-  \item[RQ2.] Can cooperative retrieval agents—one using a distributor API, the other web search—achieve near-complete datasheet coverage while maintaining low latency?
-  \item[RQ3.] What precision and recall can a vision-language parsing agent attain on key electrical specifications, and how do schema-based validation rules affect overall data quality?
+  \item[RQ2.] Can cooperative retrieval agents—one using a distributor API, the other web search—achieve near-complete datasheet coverage across diverse suppliers and part formats??
+  \item[RQ3.] What precision and recall can a vision-language parsing agent attain on key electrical specifications?
 \end{description}
 
-\section{Proposed Approach}
+\section{Proposed Approach \ding{44}}
 To answer these questions, the thesis proposes a modular pipeline whose agents each address a single sub-task:  
 \begin{enumerate}
-  \item An \textbf{MPN Extraction Agent} uses GPT-4 with prompt engineering and regex post-filters to isolate standardised identifiers from QAF text.  
-  \item Two \textbf{Retrieval Agents} query complementary sources: (i) the Octopart API for structured part metadata and (ii) a Google-backed web crawler prioritised by a cost-based heuristic that favours manufacturer domains.  
-  \item A \textbf{Parsing Agent} leverages GPT-4~Vision to read PDF datasheets and return JSON fields—voltage, current, power rating, and temperature range—together with bounding-box provenance.  
+  \item An \textbf{MPN Extraction Agent} uses GPT-4 with prompt engineering and regex to isolate MPN from QAF text.  
+  \item Two \textbf{Retrieval Agents} operate in parallel:
+    \begin{itemize}
+      \item[(i)] An \emph{API Agent} queries the Octopart distributor API to obtain structured part metadata and datasheet links.
+      \item[(ii)] A \emph{Datasheet Agent} performs a Google-based search to locate datasheet PDFs directly, prioritising high-confidence domains (e.g., manufacturer or distributor sites). And leverages Vision Language Models (VLMs) to extract the key electrical specifications from the retrieved datasheets.
+    \end{itemize}
   \item A \textbf{Validation Module} enforces JSON-Schema constraints and physical range rules and flags low-confidence extractions for manual review.  
-  \item Finally, a \textbf{Cost-Prediction Model} (gradient-boosted regression) is trained on the extracted specifications, demonstrating the economic value of the pipeline’s output.
+  \item Finally, a \textbf{Cost-Prediction Model} is trained on the extracted specifications, demonstrating the economic value of the pipeline’s output.
 \end{enumerate}
 
-\section{Contribution}
+\section{Contribution \ding{44}}
 The thesis offers four concrete contributions:
 \begin{enumerate}
   \item A fault-tolerant multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
-  \item An implementation evaluated on \textbf{1\,000} real BMW QAFs, including a manually annotated subset of 50–100 datasheets for ground-truth specification labels.  
   \item Empirical benchmarks reporting MPN extraction accuracy, datasheet retrieval success, field-level precision/recall, and end-to-end latency.  
   \item A downstream cost-prediction experiment showing that structured specs extracted by the system improve price-estimation accuracy, thus underlining direct business impact.
 \end{enumerate}
 
-\section{Thesis Structure}
+\section{Thesis Structure \ding{44}}
 The remainder of this document is organised as follows:  
-Section~\ref{chapter:relatedwork} surveys literature on language-model agents, vision-language models, and document AI in procurement.  
-Section~\ref{chapter:problem} formalises the challenges inherent to QAF processing.  
-Section~\ref{chapter:architecture} details the proposed multi-agent architecture, while Section~\ref{sec:implementation} describes implementation specifics, including prompts, API wrappers, and validation logic.  
-Section~\ref{chapter:evaluation} presents the experimental setup and quantitative results.  
-Section~\ref{chapter:costmodel} demonstrates the downstream cost-modelling application.  
-Section~\ref{chapter:discussion} reflects on limitations and industrial implications, and Section~\ref{sec:conclusion} concludes the thesis with avenues for future work.
+Chapter~\ref{chapter:relatedwork} surveys literature on language-model agents, vision-language models, and document AI in procurement.  
+Chapter~\ref{chapter:problem} formalises the challenges inherent to QAF processing.  
+Chapter~\ref{chapter:architecture} details the proposed multi-agent architecture, while Chapter~\ref{chapter:implementation} describes implementation specifics, including prompts, API wrappers, and validation logic.  
+Chapter~\ref{chapter:evaluation} presents the experimental setup and quantitative results.  
+Chapter~\ref{chapter:costmodel} demonstrates the downstream cost-modelling application.  
+Chapter~\ref{chapter:discussion} reflects on limitations and industrial implications, and Chapterion~\ref{chapter:conclusion} concludes the thesis with avenues for future work.
