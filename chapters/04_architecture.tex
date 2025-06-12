@@ -18,38 +18,45 @@ Figure~\ref{fig:architecture} illustrates the data flow from a raw QAF line to a
 Each rectangular node represents an autonomous agent implemented as a function-calling wrapper around a large language model (LLM) or vision-language model (VLM).  
 Solid arrows indicate the primary execution path, while dashed arrows represent feedback loops used for retries and validation.
 
-% \begin{figure}[ht]
-%   \centering
-%   \begin{tikzpicture}[%
-%     node distance=1.7cm,
-%     io/.style={rectangle, rounded corners=2pt, draw, align=center, minimum width=2.8cm, minimum height=1cm, font=\small},
-%     agent/.style={rectangle, draw, rounded corners=3pt, fill=blue!6, minimum width=3.7cm, minimum height=1.1cm, font=\small},
-%     datastore/.style={cylinder, draw, fill=gray!10, minimum height=1.1cm, minimum width=2cm, font=\small},
-%     every node/.style={font=\small}
-%   ]
-%     \node[io] (qaf) {QAF entry \\ (raw text)};
-%     \node[agent, right=of qaf] (mpn) {MPN\\Extraction\\Agent};
-%     \node[agent, right=of mpn] (api) {Retrieval\\Agent\\(Octopart API)};
-%     \node[agent, below=of api] (web) {Retrieval\\Agent\\(Web search)};
-%     \node[agent, right=of api] (parser) {Parsing\\Agent\\(VLM)};
-%     \node[agent, right=of parser] (validator) {Validation\\Module};
-%     \node[datastore, right=of validator] (db) {Spec DB};
-%     \node[agent, below=of validator] (cost) {Cost\\Model};
-    
-%     % arrows
-%     \draw[->] (qaf) -- (mpn);
-%     \draw[->] (mpn) -- node[above]{MPN}(api);
-%     \draw[->] (mpn) |- (web);
-%     \draw[->] (api) -- (parser);
-%     \draw[->] (web) -| (parser);
-%     \draw[->] (parser) -- (validator);
-%     \draw[->] (validator) -- (db);
-%     \draw[->, dashed] (validator.west) -- ++(-0.8,0) |- node[left]{retry / fallback}(web.south);
-%     \draw[->] (validator) -- (cost);
-%   \end{tikzpicture}
-%   \caption{End-to-end architecture of the multi-agent pipeline.}
-%   \label{fig:architecture}
-% \end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    node distance=1.7cm and 2.5cm,
+    io/.style={rectangle, rounded corners=2pt, draw, align=center, minimum width=2.8cm, minimum height=1cm, font=\small},
+    agent/.style={rectangle, draw, rounded corners=3pt, fill=blue!6, minimum width=3.7cm, minimum height=1.1cm, font=\small},
+    datastore/.style={cylinder, draw, fill=gray!10, minimum height=1.1cm, minimum width=2cm, font=\small},
+    every node/.style={font=\small}
+  ]
+    % Nodes
+    \node[io] (qaf) {\shortstack{QAF entry \\ (raw text)}};
+    \node[agent, right=of qaf] (mpn) {\shortstack{MPN\\Extraction\\Agent}};
+    \node[agent, right=of mpn] (api) {\shortstack{Retrieval\\Agent\\(Octopart API)}};
+    \node[agent, below=2.5cm of api] (web) {\shortstack{Retrieval\\Agent\\(Web search)}};
+    \node[agent, right=of api] (parser) {\shortstack{Parsing\\Agent\\(VLM)}};
+    \node[agent, right=of parser] (validator) {\shortstack{Validation\\Module}};
+    \node[datastore, right=of validator] (db) {\shortstack{Spec DB}};
+    \node[agent, below=2.5cm of validator] (cost) {\shortstack{Cost\\Model}};
+
+    % Arrows
+    \draw[->] (qaf) -- (mpn);
+    \draw[->] (mpn) -- node[above]{MPN} (api);
+    \draw[->] (mpn) |- (web);
+    \draw[->] (api) -- (parser);
+    \draw[->] (web) -| (parser);
+    \draw[->] (parser) -- (validator);
+    \draw[->] (validator) -- (db);
+    \draw[->, dashed] 
+      (validator.west) 
+      -- ++(-1.0,0) 
+      |- node[above, pos=0.25]{retry / fallback} (web.south);
+    \draw[->] (validator) -- (cost);
+  \end{tikzpicture}
+  \caption{End-to-end architecture of the multi-agent pipeline.}
+  \label{fig:architecture}
+\end{figure}
+
+
 
 \section{Agent Responsibilities}
 \paragraph{MPN Extraction Agent}  
