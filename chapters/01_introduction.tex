@@ -13,7 +13,7 @@
   \label{fig:qaf-line-example}
 \end{figure}
 
-\section{Background \ding{44}}
+\section{Background }
 The digitalisation of automotive supply chains has accelerated in recent years, yet many data-critical workflows still depend on semi-structured documents and manual interpretation.  
 A prominent example at BMW is the \emph{Quotation Analysis Form}~(QAF), a file exchanged during supplier negotiations that lists part designations, preliminary prices, delivery conditions, and essential technical details.  
 Although QAFs frequently include an identifier resembling a Manufacturer Part Number~(MPN), suppliers often embed the MPN within longer descriptive strings—alongside electrical characteristics and ordering information—or omit it altogether.  
@@ -22,7 +22,7 @@ Consequently, engineers must manually inspect each line, identify or correct the
 With several thousand parts assessed per program phase, this \emph{ad hoc} process consumes hundreds of engineer-hours and remains susceptible to transcription errors.
 
 %--------------------------------------------------
-\section{Problem Statement \ding{44}}
+\section{Problem Statement }
 Previous attempts to automate QAF processing primarily relied on regular expressions to extract Manufacturer Part Numbers~(MPNs) from raw supplier text.  
 While effective in narrowly defined cases, these approaches were brittle---minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently caused extraction to fail.  
 A further limitation was ambiguity: when the regular expression returned a null result, it was unclear whether no MPN was present or if the pattern simply failed to match a valid one.  
@@ -30,18 +30,22 @@ To address these issues, large language models~(LLMs) offer a more robust altern
 By reasoning over free-form text and recognizing contextual cues, LLMs can identify MPNs even when they are embedded in descriptive strings or surrounded by supplier-specific notations.
 
 %--------------------------------------------------
-\section{Research Objectives \ding{44}}
+\section{Research Objectives }
 The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy QAF inputs into validated, structured component specifications.  
-To operationalise this goal, the work addresses three research questions:
+To operationalise this goal, the work addresses four research questions:
 
 \begin{description}
-  \item[RQ1.] How accurately can a language-model agent extract correct MPNs from semi-structured QAF strings?
-  \item[RQ2.] Can cooperative retrieval agents—one using a distributor API, the other web search—achieve near-complete datasheet coverage across diverse suppliers and part formats??
-  \item[RQ3.] What precision and recall can a vision-language parsing agent attain on key electrical specifications?
+\item[\textbf{RQ1.}] How accurately can a language-model agent extract MPNs from noisy, multilingual part designation fields in semi-structured QAFs?
+
+\item[\textbf{RQ2.}] How reliably can cooperative retrieval agents—using distributor APIs and parse datasheet to complete the technical parameters? 
+
+\item[\textbf{RQ3.}] How can conflicting or partial parameter values from distributors and datasheets be aligned and fused into a consistent, validated representation?
+
+\item[\textbf{RQ4.}] How can provenance be captured and maintained at each stage to ensure full traceability of the extracted data?
 \end{description}
 
 %--------------------------------------------------
-\section{Proposed Approach \ding{44}}
+\section{Proposed Approach }
 To answer these questions, the thesis proposes a modular pipeline whose agents each address a single sub-task:  
 \begin{enumerate}
   \item An \textbf{MPN Extraction Agent} uses GPT-4 with prompt engineering and regex to isolate MPN from QAF text.  
@@ -55,7 +59,7 @@ To answer these questions, the thesis proposes a modular pipeline whose agents e
 \end{enumerate}
 
 %--------------------------------------------------
-\section{Contribution \ding{44}}
+\section{Contribution }
 The thesis offers four concrete contributions:
 \begin{enumerate}
   \item A fault-tolerant multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
@@ -64,7 +68,7 @@ The thesis offers four concrete contributions:
 \end{enumerate}
 
 %--------------------------------------------------
-\section{Thesis Structure \ding{44}}
+\section{Thesis Structure }
 The remainder of this document is organised as follows:  
 Chapter~\ref{chapter:relatedwork} surveys literature on language-model agents, vision-language models, and document AI in procurement.  
 Chapter~\ref{chapter:problem} formalises the challenges inherent to QAF processing.  

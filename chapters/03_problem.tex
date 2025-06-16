@@ -3,18 +3,16 @@
 
 \section{Characteristics of Quotation Analysis Forms (QAFs)}
 A Quotation Analysis Form (QAF) is a semi-structured document exchanged during early supplier negotiations.  
-At BMW, QAFs appear in multiple digital formats—CSV exports, Excel sheets, and supplier-specific PDF templates.  
+At BMW, QAFs appear in Excel sheets.  
 Typical fields include:  
 
 \begin{itemize}
   \item \textbf{Part Designation:} free-text description (e.\,g., ``STM32F103C8 MCU 64\,KB Flash TQFP48''),
-  \item \textbf{Technical Specs:} one or more numeric attributes (voltage, current, temperature limits),
   \item \textbf{Price and MOQ:} preliminary unit price, minimum order quantity,
-  \item \textbf{Manufacturer Part Number (MPN):} often concatenated with package or tolerance, occasionally missing or misspelled.
 \end{itemize}
 
-The absence of a universal schema means column order, header names, and punctuation vary widely across suppliers.  
-Furthermore, multilingual notations (``Gehäuse'', ``Temp. Bereich'') complicate rule-based parsing.
+The challenge lies in the Part Designation column, which often combines technical specifications and the manufacturer part number (MPN) into a single free-text field.
+This lack of structure, along with multilingual notations (e.g., Gehäuse'', Temp. Bereich''), complicates rule-based parsing.
 
 \section{Core Challenges}
 \paragraph{C1: Inconsistent Identifier Extraction}  
@@ -24,23 +22,32 @@ Example:
 \ttfamily PI3USB9281ZLE\_EX   20V Vbus Switch, TQFN-14, -40–85°C
 \end{center}
 
-\paragraph{C2: Heterogeneous Datasheet Sources}  
-Even after a correct MPN is found, the corresponding datasheet might be located on:
+\paragraph{C2: Missing Identifier-to-Parameter Mapping}
+Even after correctly extracting an MPN, there is no comprehensive public or commercial database that reliably maps part numbers to their technical parameters—not even major distributors provide complete coverage.
+This forces systems to extract parameters directly from datasheets, introducing additional complexity and dependence on document parsing.
+
+\paragraph{C3: Datasheet Discovery and Access}
+Locating a reliable datasheet for a given MPN involves searching across:
 \begin{enumerate}
-  \item manufacturer domains (trusted),
-  \item distributor portals (moderately trusted),
-  \item third-party PDF mirrors (low trust, risk of 404 or captcha).
+\item manufacturer websites (high trust),
+\item distributor platforms (moderate trust),
+\item third-party mirrors (low trust, often behind captchas or broken links).
 \end{enumerate}
-Selecting the ``best'' source requires ranking by reliability, download cost, and historical success.
+Selecting the most reliable source requires balancing trust, accessibility, and past success rates.
 
-\paragraph{C3: Complex Document Layouts}  
-Technical PDFs mix tables, figures, and footnotes.  
-Numeric specs can appear in summary tables or deep in application sections.  
-Standard OCR engines often split rows or mis-align columns, reducing extraction accuracy.
+\paragraph{C4: Parameter Extraction from Unstructured Documents}
+Datasheets are often long, unstructured PDFs with inconsistent formatting.
+Technical parameters may appear in dense tables, inline text, or charts, and standard extraction tools frequently miss context, units, or formatting—compromising accuracy.
 
-\paragraph{C4: Lack of Validation and Provenance}  
-Classic table-extraction pipelines output values without units or context.  
-For safety-critical components, engineers must know \emph{where} a value came from (page and bounding box) and whether it respects physical constraints (e.\,g., voltage $>$ 0).
+\paragraph{C5: Parameter Alignment Across Sources}
+Technical specifications for a given part may be scattered across multiple sources—for example, partially listed on a distributor's website and partially extracted from the manufacturer's datasheet.
+These representations often differ in terminology, format, precision, or units.
+Reconciling this fragmented information requires normalization, deduplication, and conflict resolution to generate a consistent and accurate parameter set.
+
+\paragraph{C6: Provenance and Traceability Requirements}
+For safety-critical or compliance-sensitive applications, it's not enough to extract technical parameters—each value must be traceable to its original source.
+This includes metadata such as the document name, page number, table or bounding box location, and source type (e.g., datasheet vs. distributor site).
+Lack of provenance undermines trust in the extracted data and complicates manual verification or auditing by engineers.
 
 \section{Formal Problem Definition}
 Let $q \in \mathcal{Q}$ denote a single QAF entry containing noisy text tokens.  
@@ -53,7 +60,7 @@ such that:
 \begin{enumerate}
   \item \textbf{Correctness:} each numeric field equals the value printed in the authoritative datasheet.
   \item \textbf{Completeness:} mandatory fields are present; optional fields are \texttt{null} if not in the document.  
-  \item \textbf{Provenance:} every field carries evidence page, bbox.  
+  \item \textbf{Provenance:} each field is traceable to its source, including its source, document name, page number.
   \item \textbf{Latency:} average end-to-end processing time $<15$ s per QAF.  
 \end{enumerate}
 
@@ -61,28 +68,40 @@ such that:
 Derived from the challenges and formal criteria, the target system must:
 
 \begin{enumerate}
-  \item \textbf{Robust MPN Extraction} – tolerate noise, multi-language descriptors, and embedded package codes.  
-  \item \textbf{Adaptive Retrieval} – combine distributor APIs and web search to maximise datasheet coverage while minimising failed downloads.  
-  \item \textbf{Multi-Modal Parsing} – handle tables, prose, and regulatory footnotes using a vision-language model.  
-  \item \textbf{Schema Validation} – enforce type, unit, and range checks; flag anomalies.  
-  \item \textbf{Traceability} – store page coordinates and raw snippets for audit.  
-  \item \textbf{Scalability} – process at least 3\,000 QAF lines per day on commodity cloud hardware.  
+\item \textbf{R1: Noise-Tolerant Identifier Extraction} – Accurately extract MPNs from unstructured, noisy part designation strings, despite the presence of packaging codes, technical descriptors, or marketing language (addresses C1).
+
+\item \textbf{R2: No-Schema Parameter Discovery} – Support parameter extraction even in the absence of a structured identifier-to-parameter mapping, by relying on downstream datasheet parsing (addresses C2).
+
+\item \textbf{R3: Resilient Datasheet Retrieval} – Retrieve datasheets from a mix of trusted and unreliable sources, prioritizing success rate and content reliability while handling captchas, dead links, and inconsistent formats (addresses C3).
+
+\item \textbf{R4: Multi-Source Parameter Fusion} – Normalize and reconcile parameter values found across datasheets and distributor sites, resolving differences in naming, units, and precision to generate a coherent specification set (addresses C5).
+
+\item \textbf{R5: Structured Parameter Extraction} – Accurately extract parameter values from unstructured documents (PDFs), handling tables, prose, and visual elements using multi-modal models (addresses C4).
+
+\item \textbf{R6: End-to-End Traceability} – Track and store detailed provenance for each parameter, including source URL, document page, and bounding box, to support validation, auditing, and engineer trust (addresses C6).
 \end{enumerate}
+
+
+% mapping
+% \begin{description}
+%   \item[RQ1.] How accurately can a language-model agent extract correct MPNs from semi-structured QAF strings?
+%   \item[RQ2.] Can cooperative retrieval agents-one using a distributor API, the other web search—achieve near-complete datasheet coverage across diverse suppliers and part formats??
+%   \item[RQ3.] What precision and recall can a vision-language parsing agent attain on key electrical specifications?
+%   \item[RQ5.] How can the system be designed to ensure traceability and provenance of extracted data?
+% \end{description}
 
 
 \section{Mapping Challenges to Research Questions}
 \begin{center}
 \begin{tabular}{lll}
 \textbf{Challenge} & \textbf{Requirement} & \textbf{Mapped RQ} \\\hline
-C1 & R1 & RQ1 \\
-C2 & R2 & RQ2 \\
-C3 & R3 & RQ3 \\
-C4 & R4,\;R5 & RQ3 (validation aspect) \\
-Performance & R6 & All RQs (latency+throughput) \\
+C1 & R1 & RQ1  \\
+C4 & R5 & RQ2  \\
+C5 & R4 & RQ3  \\
+C6 & R6 & RQ4  \\
+\textit{(Cross-cutting)} & R6 & All RQs (system-level trade-offs) \\
 \end{tabular}
 \end{center}
 
-% Adjust numeric labels (P1–P4, R1–R6) or add more spec fields if needed.
-% Update citations once sources are chosen (e.g., OCR errors, datasheet parsing papers).
 
 This mapping clarifies how each experimental evaluation in later chapters directly addresses an identified pain point in BMW’s procurement workflow.
