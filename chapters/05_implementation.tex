@@ -1,2 +1,126 @@
 \chapter{Implementation}
 \label{chapter:implementation}
+
+%--------------------------------------------------
+\section{Technology Stack}
+The system is implemented in \textbf{Python~3.11} and relies on a small set of well-maintained open-source libraries:
+\begin{itemize}
+  \item \textbf{LangChain}~\footnote{v0.1.19 at time of writing} for agent orchestration and tool routing.
+  \item \textbf{PyPDF2} and \textbf{pdfminer.six} for lightweight PDF metadata inspection.
+  \item \textbf{OpenAI Python SDK} for GPT-4 and GPT-4~Vision function calls.
+  \item \textbf{Playwright} to drive a head-less Chromium browser for Google search and captcha-free PDF downloads.
+  \item \textbf{FastAPI} to expose an HTTP ingress for batch processing and health probes.
+  \item \textbf{RedisJSON} (Redis~7) as a low-latency shared memory between agents.
+  \item \textbf{PostgreSQL~15} for durable storage of validated specification records and provenance.
+  \item \textbf{Docker Compose} to bundle all services into a reproducible, single-command deployment.
+\end{itemize}
+GPU acceleration is optional but recommended for the VLM parsing step; the reference deployment uses an \texttt{NVIDIA~A10} with the \texttt{nvidia-container-toolkit} runtime.
+
+%--------------------------------------------------
+\section{Repository Layout}
+Listing~\ref{lst:tree} shows the top-level directory structure.  Each agent lives in its own module with clear dependency boundaries.
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.9\textwidth}
+\begin{verbatim}
+agents/
+  mpn_extractor.py
+  retrieval_api.py
+  retrieval_web.py
+  parser_vlm.py
+  validation.py
+prompts/
+  mpn_prompt.txt
+  parser_cot.txt
+orchestration/
+  executor.py
+  memory.py
+infra/
+  docker-compose.yml
+  grafana-dashboard.json
+app.py
+\end{verbatim}
+\end{minipage}
+\caption{Abbreviated repository tree.}
+\label{lst:tree}
+\end{figure}
+
+%--------------------------------------------------
+\section{Agent Implementations}
+This section details the concrete logic, prompts, and error-handling behaviour of each agent introduced in Chapter~\ref{chapter:architecture}.
+
+\subsection{MPN Extraction Agent}
+The agent exposes a single LangChain \texttt{Tool} with the JSON schema in Listing~\ref{lst:mpn_schema}.  A few-shot prompt (\emph{``Identify the most probable manufacturer part number …''}) primes GPT-4 with six diverse QAF examples.  Post-processing removes common packaging suffixes (\texttt{-TR}, \texttt{-T/R}) and trims whitespace.  Regex validation assures an alphanumeric core of at least six characters.
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.9\textwidth}
+\begin{verbatim}
+{ "type": "object", "properties": {
+    "mpn": {"type": "string"}
+  }, "required": ["mpn"] }
+\end{verbatim}
+\end{minipage}
+\caption{JSON schema emitted by the MPN Extraction Agent.}
+\label{lst:mpn_schema}
+\end{figure}
+
+\subsection{Retrieval Agents}
+\paragraph{Octopart API Wrapper}  Queries are rate-limited to ten requests per second via an async semaphore.  Responses are cached in Redis with a 24-hour TTL keyed by MPN.
+
+\paragraph{Web-Search Agent}  Playwright launches a \texttt{chromium} browser in non-headed, proxy-aware mode and executes the search string:\\
+\texttt{\{MPN\} datasheet filetype:pdf}.  Candidate URLs are scored by the heuristic in Equation~\ref{eq:heuristic}.  PDFs larger than 20~MB or smaller than 50~kB are discarded early to save tokens in the parsing step.
+
+\subsection{Parsing Agent (GPT-4 Vision)}
+Each downloaded PDF is split into page images which are batched into groups of four to amortise API overhead.  The chain-of-thought prompt first asks GPT-4 V to produce a section outline before extracting the five target parameters (voltage, current, power, temperature, package).  The agent returns both the JSON fields and a list of (page, bbox) tuples for provenance.
+
+\subsection{Validation Module}
+Validation combines three layers:
+\begin{enumerate}
+  \item \textbf{JSON-Schema} checks ensure types and units.
+  \item \textbf{Physical range} rules (e.g., $0< V_{\max}<1000\,\mathrm{V}$).
+  \item \textbf{Cross-source consistency} compares datasheet values with Octopart metadata; discrepancies >5\,\% trigger a retry path to the Web-Search Agent.
+\end{enumerate}
+If validation succeeds, the record is written to PostgreSQL and an OpenTelemetry span is emitted.
+
+%--------------------------------------------------
+\section{Orchestration and State Management}
+Agents are registered as LangChain tools and executed by an \texttt{LCEL} (LangChain Expression Language) graph shown in Figure~\ref{fig:lcel}.  Shared state is held in \texttt{RedisJSON} under the key \texttt{qaf:\textless{}id\textgreater{}}.  Updates are performed with optimistic locking to avoid lost writes when agents run in parallel.
+
+%--------------------------------------------------
+\section{Infrastructure and Deployment}
+A single \texttt{docker-compose.yml} file (Listing~\ref{lst:compose}) spins up the entire stack: \texttt{app} (FastAPI), \texttt{redis}, \texttt{postgres}, and an optional \texttt{grafana} + \texttt{prometheus} pair for metrics.
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.9\textwidth}
+\begin{verbatim}
+version: "3.9"
+services:
+  app:
+    build: ..
+    env_file: .env
+    runtime: nvidia
+    depends_on: [redis, db]
+  redis:
+    image: redis:7-alpine
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: secret
+\end{verbatim}
+\end{minipage}
+\caption{Excerpt of the Docker-Compose deployment.}
+\label{lst:compose}
+\end{figure}
+Continuous Integration (CI) runs \texttt{pytest} and \texttt{flake8} on every push; merges to \texttt{main} trigger an Azure Container Registry build and redeploy to a D8s~v5 VM via GitHub Actions.
+
+%--------------------------------------------------
+\section{Observability and Cost Tracking}
+OpenTelemetry interceptors export traces (latency, token consumption, retry counts) to Grafana Cloud.  A budgeting cron job queries the Postgres \texttt{cost\_log} table and sends Slack alerts when monthly spend exceeds 50\,\% of budgeted EUR~200.
+
+%--------------------------------------------------
+\section{Security and Compliance}\label{sec:security}
+All outbound traffic routes through BMW's corporate proxy; external domains are allow-listed.  API keys are mounted from \texttt{/mnt/secrets} using Azure Managed Identity.  The FastAPI service enforces OAuth~2.0 access tokens, and an SBOM is generated via Syft for each release to satisfy ISO~21434 traceability.
+
+%--------------------------------------------------
+\section{Summary}
+This chapter translated the high-level architecture into concrete implementation artefacts: Python modules, prompts, deployment scripts, and observability tooling.  The next chapter evaluates how well these design choices satisfy the performance and accuracy requirements defined earlier.
