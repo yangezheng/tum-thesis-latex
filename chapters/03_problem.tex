@@ -1,9 +1,9 @@
 \chapter{Problem Setting}
 \label{chapter:problem}
 
-\section{Characteristics of Quotation Analysis Forms (QAFs)}
-A Quotation Analysis Form (QAF) is a semi-structured document exchanged during early supplier negotiations.  
-At BMW, QAFs appear in Excel sheets.  
+\section{Characteristics of quotation analysis templates}
+A standardised quotation analysis template is a semi-structured document exchanged during early supplier negotiations.  
+In many companies, such templates appear in spreadsheet format.  
 Typical fields include:  
 
 \begin{itemize}
@@ -50,7 +50,7 @@ This includes metadata such as the document name, page number, table or bounding
 Lack of provenance undermines trust in the extracted data and complicates manual verification or auditing by engineers.
 
 \section{Formal Problem Definition}
-Let $q \in \mathcal{Q}$ denote a single QAF entry containing noisy text tokens.  
+Let $q \in \mathcal{Q}$ denote a single template entry containing noisy text tokens.  
 The task is to compute a validated specification record  
 \[
 \mathbf{s} = \bigl(\mathrm{MPN},\; \mathrm{Voltage_{max}},\; \mathrm{Current_{max}},\; \mathrm{TempRange},\dots\bigr)
@@ -61,7 +61,7 @@ such that:
   \item \textbf{Correctness:} each numeric field equals the value printed in the authoritative datasheet.
   \item \textbf{Completeness:} mandatory fields are present; optional fields are \texttt{null} if not in the document.  
   \item \textbf{Provenance:} each field is traceable to its source, including its source, document name, page number.
-  \item \textbf{Latency:} average end-to-end processing time $<15$ s per QAF.  
+  \item \textbf{Latency:} average end-to-end processing time $<15$ s per template.  
 \end{enumerate}
 
 \section{Automation Requirements}
@@ -104,4 +104,4 @@ C6 & R6 & RQ4  \\
 \end{center}
 
 
-This mapping clarifies how each experimental evaluation in later chapters directly addresses an identified pain point in BMW’s procurement workflow.
+This mapping clarifies how each experimental evaluation in later chapters directly addresses a pain point in industrial procurement workflows.
