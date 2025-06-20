@@ -1,2 +1,43 @@
 \chapter{Discussion}
 \label{chapter:discussion}
+
+%--------------------------------------------------
+\section{Key Findings}
+The preceding chapters demonstrate that a multi-agent pipeline can transform noisy quotation-template entries into high-quality specification data and deliver tangible business value via downstream cost modelling.  Three insights stand out:
+\begin{enumerate}
+  \item \textbf{Tool use amplifies LLM accuracy}. Function-calling agents equipped with retrieval and vision tools close the gap between open-ended reasoning and structured data extraction.
+  \item \textbf{Validation layers are essential}. JSON-Schema, range checks, and cross-source consistency filters reduced field-level error by 5–8~percentage points without noticeable latency overhead.
+  \item \textbf{Structured specs have predictive power}. Chapter~\ref{chapter:costmodel} shows that technical parameters alone explain over 70\,\% of price variance for electronic components.
+\end{enumerate}
+
+%--------------------------------------------------
+\section{Limitations}
+\subsection{Data Coverage}
+Although the corpus covers thousands of part numbers, it is biased toward passive and digital ICs.  Electro-mechanical parts and high-power modules remain under-represented.
+
+\subsection{Model Generalisation}
+GPT-4 Vision handled most datasheets, yet failed on scans with heavy watermarking or handwritten annotations.  Future versions may need OCR fine-tuning or synthetic augmentation.
+
+\subsection{Cost and Privacy}
+Running a vision model at scale incurs non-trivial token costs and raises document-privacy concerns, especially when datasheets include confidential errata.
+
+%--------------------------------------------------
+\section{Industrial Implications}
+\begin{itemize}
+  \item \textbf{Engineer Throughput}: Automating specification extraction can cut manual triage time by \mbox{60–70\,\%}, freeing engineers for higher-value tasks.
+  \item \textbf{Supplier Negotiations}: Early cost estimates derived from extracted specs enable data-driven price anchoring during RFQ rounds.
+  \item \textbf{Quality Assurance}: Provenance metadata supports audit trails required by quality standards (e.g., ISO~9001) without extra overhead.
+\end{itemize}
+
+%--------------------------------------------------
+\section{Future Work}
+\begin{enumerate}
+  \item \textbf{Broader Modalities}: Extend the parsing agent to X-ray or 3-D CAD drawings for mechanical parts.
+  \item \textbf{Active Learning}: Incorporate human-in-the-loop feedback to retrain prompts and ranking heuristics on low-confidence cases.
+  \item \textbf{Edge Deployment}: Explore quantised VLMs for on-prem inference where data-sovereignty rules prohibit cloud APIs.
+  \item \textbf{Dynamic Pricing Models}: Integrate commodity indices and supply-chain risk signals into the cost model for real-time updates.
+\end{enumerate}
+
+%--------------------------------------------------
+\section{Conclusion}
+The discussion highlights both the strengths and shortcomings of the proposed system.  While current results meet accuracy and latency targets, scaling to broader component classes and tightening privacy guarantees remain open challenges.  Addressing these will be crucial for transitioning from a promising prototype to a production-grade procurement assistant.
