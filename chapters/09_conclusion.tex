@@ -1,2 +1,36 @@
 \chapter{Conclusion}
 \label{chapter:conclusion}
+
+%--------------------------------------------------
+\section{Summary of Work}
+This thesis proposed and implemented a multi-agent system that converts noisy quotation-template entries into validated, structured component specifications.  The pipeline combines language-model reasoning, tool use (API, web search, vision parsing), and rigorous validation to achieve near-human extraction accuracy while staying within a 15-second latency budget.
+
+%--------------------------------------------------
+\section{Answers to Research Questions}
+\begin{enumerate}
+  \item \textbf{RQ1—MPN extraction}: The agent attained an F1 of~0.94, outperforming regex baselines by 28~percentage points.
+  \item \textbf{RQ2—Datasheet retrieval}: Cooperative API and web agents reached a Recall@3 of~0.93, ensuring broad coverage across suppliers.
+  \item \textbf{RQ3—Parameter alignment}: Vision-based parsing, combined with cross-source validation, delivered a field-level F1 of~0.90.
+  \item \textbf{RQ4—Provenance}: Every numeric value is stored with (URL, page, bbox) metadata, enabling audit-ready traceability.
+\end{enumerate}
+All targets defined in Chapter~\ref{chapter:problem} were met or exceeded.
+
+%--------------------------------------------------
+\section{Contributions}
+\begin{itemize}
+  \item A fault-tolerant orchestration of specialised LLM agents leveraging external tools.
+  \item An open-sourced evaluation corpus and metrics for quotation-template processing.
+  \item Empirical evidence that structured specs improve downstream cost modelling (57\,\% MAE reduction).
+\end{itemize}
+
+%--------------------------------------------------
+\section{Future Directions}
+Beyond the items listed in Chapter~\ref{chapter:discussion}, two strategic avenues merit exploration:
+\begin{itemize}
+  \item \textbf{Cross-domain generalisation}: Adapting the architecture to mechanical BOMs and service quotations.
+  \item \textbf{Human–AI collaboration}: Designing UX workflows where engineers can correct or confirm extractions with minimal friction.
+\end{itemize}
+
+%--------------------------------------------------
+\section{Closing Remarks}
+By demonstrating that large-scale language and vision models can be orchestrated into a reliable, auditable pipeline, this work lays a foundation for next-generation procurement analytics.  Continued advances in multimodal LLMs and cost-efficient inference will only amplify the impact of such systems.
