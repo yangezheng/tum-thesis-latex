@@ -14,7 +14,7 @@ This chapter describes the overall design of the proposed multi-agent pipeline, 
 
 \section{High-Level Overview}
 
-Figure~\ref{fig:architecture} illustrates the data flow from a raw QAF line to a validated specification record and a downstream cost prediction.  
+Figure~\ref{fig:architecture} illustrates the data flow from a raw standardised quotation analysis template line to a validated specification record and a downstream cost prediction.  
 Each rectangular node represents an autonomous agent implemented as a function-calling wrapper around a large language model (LLM) or vision-language model (VLM).  
 Solid arrows indicate the primary execution path, while dashed arrows represent feedback loops used for retries and validation.
 
@@ -29,17 +29,18 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
     agent/.style={rectangle, draw, minimum width=5cm, minimum height=1.1cm, align=center, anchor=north},
     fusion/.style={rectangle, rounded corners=3pt, draw, dashed, minimum width=6cm, minimum height=1.2cm, align=center},
     validation/.style={rectangle, draw, minimum width=5cm, minimum height=1.1cm, align=center},
-    storage/.style={cylinder, draw, minimum height=1.1cm, minimum width=2.5cm, align=center}
+    storage/.style={cylinder, draw, minimum height=1.1cm, minimum width=2.5cm, align=center},
+    cost/.style={rectangle, draw, minimum width=5cm, minimum height=1.1cm, align=center}
   ]
     % Top node
     \node[start] (start) {Start: MPN Input};
 
     % Planner
-    \node[planner, below=of start] (planner) {Planner Agent -- Tool Reasoning};
+    \node[planner, below=of start] (planner) {Planner Agent -- MPN Extraction};
 
     % Two agents
-    \node[agent, below left=1.5cm and 3.5cm of planner.south] (octopart) {Octopart Agent -- API Access};
-    \node[agent, below=1.5cm of planner] (pdf) {PDF Agent -- Document Parsing};
+    \node[agent, below left=1.5cm and 3.5cm of planner.south] (api) {Retrieval Agent -- API Access};
+    \node[agent, below=1.5cm of planner] (pdf) {Retrieval Agent -- PDF Parsing};
 
     % Field Fusion
     \node[fusion, below=2.2cm of pdf] (fusion) {Field Fusion -- Schema Resolution};
@@ -50,14 +51,18 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
     % Storage
     \node[storage, below=1.5cm of validation] (storage) {Spec DB};
 
+    % Cost Model
+    \node[cost, below=1.5cm of storage] (cost) {Cost Model};
+
     % Arrows
     \draw[->] (start) -- (planner);
-    \draw[->] (planner) -- (octopart);
+    \draw[->] (planner) -- (api);
     \draw[->] (planner) -- (pdf);
-    \draw[->] (octopart) -- (fusion);
+    \draw[->] (api) -- (fusion);
     \draw[->] (pdf) -- (fusion);
     \draw[->] (fusion) -- (validation);
     \draw[->] (validation) -- node[right]{valid} (storage);
+    \draw[->] (storage) -- (cost);
 
     % Feedback loop for invalid case
     \draw[->, dashed]
@@ -73,41 +78,43 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 
 
 \section{Agent Responsibilities}
-\paragraph{MPN Extraction Agent}  
-Receives a raw QAF string and applies a few-shot GPT-4 prompt that asks the model to return a JSON object with the most likely manufacturer part number.  
-A lightweight post-processor removes package suffixes (e.\,g.\ "‐TR") and checks against a regex whitelist of vendor prefixes.
+\paragraph{Planner Agent}  
+Receives a raw QAF string and applies a few-shot GPT-4 prompt that asks the model to return a JSON object with the most likely manufacturer part number.
+The output is then passed to the Retrieval Agents.
+
 
 \paragraph{Retrieval Agent (API)}  
 Queries the Octopart REST API with the extracted MPN.  
 If the API returns \verb|datasheets| with a direct PDF link and the file size is within 50 kB–20 MB, the link is forwarded to the Parsing Agent.
 
-\paragraph{Retrieval Agent (Web)}  
+\paragraph{Retrieval Agent (PDF)}  
 Uses Playwright to perform a Google search of the form  
 \texttt{\{MPN\} datasheet filetype:pdf}.  
 % Results are scored by the reliability heuristic in Equation~\eqref{eq:heuristic}.  
-The top-3 PDFs are downloaded for validation.
+The most likely PDFs are downloaded for validation.
+after the pdfs are downloaded, the pdf agent will use a chain of thought prompt to extract the most likely parameters from the pdf.
 
-\paragraph{Parsing Agent}  
-Given a PDF path, calls GPT-4 Vision with a chain-of-thought template: first summarise the datasheet sections, then extract \verb|max_voltage|, \verb|max_current|, \verb|power_rating|, \verb|temp_range|, and return JSON plus page/bbox evidence.
+\paragraph{Field Fusion}
+The field fusion module will take the output from the retrieval agents and compare them to the standardised quotation analysis template.
+The field will output a json object with the most likely parameters, the output of the field fusion module is then passed to the validation module.
 
 \paragraph{Validation Module}  
 Executes three layers of checks:
 \begin{enumerate}
   \item JSON-Schema validation (types + units),
   \item range rules (e.\,g.\ $0 < V_{max} < 1000V$),
-  \item duplicate consistency (table vs. paragraph vs. Octopart value).
 \end{enumerate}  
 Failures trigger a dashed feedback edge to the Web Retrieval Agent for retry.
 
-\paragraph{Cost Model}  
-Trains an XGBoost regressor on validated specs + historical SAP prices to demonstrate the economic relevance of the structured output.
+\paragraph{Cost Model Example}  
+As a sample downstream task, a cost model is implemented by training an random forest regressor on validated specification records and historical prices. This demonstrates how the structured output can be used for economic analysis or price prediction.
 
 \section{Agent Coordination and Memory}
-Agents communicate via the LangChain executor, which offers:  
+Agents are orchestrated using the LangGraph framework, which enables flexible, graph-based workflows and agent composition.  
 \begin{itemize}
-  \item \textbf{Function-calling interface}: each agent exposes a JSON schema; GPT-4 picks the correct function based on the task.  
-  \item \textbf{Shared Memory}: RedisJSON stores intermediate results (\verb|mpn|, \verb|pdf_path|, validation flags) accessible to all agents.  
-  \item \textbf{Retry Logic}: a decorator intercepts exceptions, waits exponentially (1 s, 2 s, 4 s), and reroutes control to the fallback agent if attempts $>3$.
+  \item \textbf{Function-calling interface}: Each agent exposes a JSON schema; GPT-4 (or other LLM) selects and invokes the appropriate function based on the current task node in the graph.
+  \item \textbf{Shared State}: LangGraph maintains a mutable state object that is passed between agents as the workflow progresses. This state contains intermediate results (such as \verb|mpn|, \verb|pdf_path|, validation flags) and is accessible to all agents at each step, enabling coordination without explicit external storage.
+  \item \textbf{Retry Logic}: Retry and fallback behavior is implemented within the graph structure—nodes can be configured to handle exceptions, apply exponential backoff (1 s, 2 s, 4 s), and reroute control to fallback agents if the number of attempts exceeds 3.
 \end{itemize}
 
 \section{Source Ranking Heuristic}

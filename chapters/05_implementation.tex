@@ -9,10 +9,7 @@ The system is implemented in \textbf{Python~3.11} and relies on a small set of w
   \item \textbf{PyPDF2} and \textbf{pdfminer.six} for lightweight PDF metadata inspection.
   \item \textbf{OpenAI Python SDK} for GPT-4 and GPT-4~Vision function calls.
   \item \textbf{Playwright} to drive a head-less Chromium browser for Google search and captcha-free PDF downloads.
-  \item \textbf{FastAPI} to expose an HTTP ingress for batch processing and health probes.
-  \item \textbf{RedisJSON} (Redis~7) as a low-latency shared memory between agents.
   \item \textbf{PostgreSQL~15} for durable storage of validated specification records and provenance.
-  \item \textbf{Docker Compose} to bundle all services into a reproducible, single-command deployment.
 \end{itemize}
 GPU acceleration is optional but recommended for the VLM parsing step; the reference deployment uses an \texttt{NVIDIA~A10} with the \texttt{nvidia-container-toolkit} runtime.
 
@@ -26,7 +23,6 @@ Listing~\ref{lst:tree} shows the top-level directory structure.  Each agent live
 agents/
   mpn_extractor.py
   retrieval_api.py
-  retrieval_web.py
   parser_vlm.py
   validation.py
 prompts/
