@@ -36,7 +36,7 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
     \node[start] (start) {Start: MPN Input};
 
     % Planner
-    \node[planner, below=of start] (planner) {Planner Agent -- MPN Extraction};
+    \node[planner, below=of start] (planner) {MPN Agent -- MPN Extraction};
 
     % Two agents
     \node[agent, below left=1.5cm and 3.5cm of planner.south] (api) {Retrieval Agent -- API Access};
@@ -78,9 +78,8 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 
 
 \section{Agent Responsibilities}
-\paragraph{Planner Agent}  
-Receives a raw standardised quotation analysis template string and applies a few-shot GPT-4 prompt that asks the model to return a JSON object with the most likely manufacturer part number.
-The output is then passed to the Retrieval Agents.
+\paragraph{MPN Agent}  
+The MPN Agent receives a raw standardised quotation analysis template line, extracts the most likely Manufacturer Part Number (MPN) using a few-shot GPT-4 prompt, and forwards the extracted MPN to the Retrieval Agent. The Retrieval Agent then attempts to find the technical parameters of the component based on the provided MPN.
 
 
 \paragraph{Retrieval Agent (API)}  
@@ -118,26 +117,28 @@ Agents are orchestrated using the LangGraph framework, which enables flexible, g
 \end{itemize}
 
 \section{Source Ranking Heuristic}
-For every candidate PDF URL $u$, the cost score is computed as
+When ranking candidate PDF URLs for datasheet retrieval, the system evaluates each source using a composite cost score that reflects both technical and content-based criteria. For each candidate URL $u$, the following factors are considered:
+\begin{itemize}
+    \item \textbf{Domain Trust Level:} Manufacturer domains are preferred (score 0), followed by trusted distributors (score 1), with all other domains scored as 2.
+    \item \textbf{Direct PDF Link:} URLs ending with \texttt{.pdf} are favored (score 0), while indirect or non-PDF links are penalized (score 1).
+    \item \textbf{Historical Failure Rate:} An exponentially decayed average of previous download failures from the same host, to deprioritize unreliable sources.
+    \item \textbf{PDF Size:} Files are checked to ensure they fall within an acceptable size range (e.g., 50 kB–20 MB); extremely small or large files are penalized.
+    \item \textbf{Number of Pages:} PDFs with a plausible number of pages for a datasheet (e.g., 1–20) are preferred; outliers are deprioritized.
+    \item \textbf{Keyword Presence:} The system scans the PDF (or its metadata) for key terms such as ``specification,'' ``datasheet,'' or the target MPN, boosting the score for matches.
+\end{itemize}
+The overall cost is computed as a weighted sum of these features:
 \begin{equation}
 \label{eq:heuristic}
-\mathrm{cost}(u)=0.2\;\mathrm{domain}(u)+0.4\;\mathrm{pdfWeight}(u)+0.4\;\mathrm{failRate}(u),
+\mathrm{cost}(u) = w_1 \cdot \mathrm{domain}(u) + w_2 \cdot \mathrm{pdfWeight}(u) + w_3 \cdot \mathrm{failRate}(u) + w_4 \cdot \mathrm{sizePenalty}(u) + w_5 \cdot \mathrm{pagePenalty}(u) - w_6 \cdot \mathrm{keywordBonus}(u)
 \end{equation}
-where \(\mathrm{domain}=0\) for manufacturer sites, 1 for trusted distributors, 2 otherwise;  
-\(\mathrm{pdfWeight}=0\) if the URL ends with \texttt{.pdf}, else 1;  
-and \(\mathrm{failRate}\) is an exponentially decayed average of previous download failures from the same host.
+where $w_1, \ldots, w_6$ are tunable weights reflecting the importance of each criterion. Lower cost scores indicate higher-priority candidates for download and parsing.
 
 \section{Data Storage and Logging}
-Validated JSON records are written to a PostgreSQL table with columns for \verb|mpn|, \verb|spec_json| (JSONB), \verb|provenance| (JSONB), and an Azure Blob link to the PDF.  
-OpenTelemetry traces (agent name, latency, token usage) are exported to Grafana for live monitoring.
+After downloading each PDF, the file is uploaded to Azure Blob Storage. The Azure Blob link, together with its original source URL, is stored in a PostgreSQL database hosted on Azure. The validated specification fields are stored directly in dedicated columns of the PostgreSQL table (rather than as a JSON blob), along with the \verb|mpn|, provenance information, and the Azure Blob link and origin.
 
 \section{Fault Tolerance}
 If both retrieval agents fail, the system stores a \verb|status = "unresolved"| entry for manual triage.  
 Parsing errors with low OCR confidence ($<0.7$) raise a warning but still save partially validated fields, ensuring \emph{at-least-once} data capture.
-
-\section{Security and Cost Considerations}
-All external calls pass through BMW's outbound proxy; API secrets are managed via Azure Key Vault.  
-Estimated operating cost on an Azure D8s~v5 VM plus one A10 GPU is \(\approx 0.90\,€\) per 1 000 processed standardised quotation analysis template lines, dominated by GPT-4 Vision tokens.
 
 \section{Mapping to Requirements}
 Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{sec:problem}.
