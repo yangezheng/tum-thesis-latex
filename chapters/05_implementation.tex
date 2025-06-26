@@ -25,7 +25,7 @@ agents/
   retrieval_api.py
   parser_vlm.py
   validation.py
-prompts/
+prompts/ 
   mpn_prompt.txt
   parser_cot.txt
 orchestration/
@@ -46,7 +46,7 @@ app.py
 This section details the concrete logic, prompts, and error-handling behaviour of each agent introduced in Chapter~\ref{chapter:architecture}.
 
 \subsection{MPN Extraction Agent}
-The agent exposes a single LangChain \texttt{Tool} with the JSON schema in Listing~\ref{lst:mpn_schema}.  A few-shot prompt (\emph{``Identify the most probable manufacturer part number …''}) primes GPT-4 with six diverse QAF examples.  Post-processing removes common packaging suffixes (\texttt{-TR}, \texttt{-T/R}) and trims whitespace.  Regex validation assures an alphanumeric core of at least six characters.
+The agent exposes a single LangChain \texttt{Tool} with the JSON schema in Listing~\ref{lst:mpn_schema}.  A few-shot prompt (\emph{``Identify the most probable manufacturer part number …''}) primes GPT-4 with six diverse standardised quotation analysis template examples.  Post-processing removes common packaging suffixes (\texttt{-TR}, \texttt{-T/R}) and trims whitespace.  Regex validation assures an alphanumeric core of at least six characters.
 \begin{figure}[H]
 \centering
 \begin{minipage}{0.9\textwidth}
@@ -80,7 +80,7 @@ If validation succeeds, the record is written to PostgreSQL and an OpenTelemetry
 
 %--------------------------------------------------
 \section{Orchestration and State Management}
-Agents are registered as LangChain tools and executed by an \texttt{LCEL} (LangChain Expression Language) graph shown in Figure~\ref{fig:lcel}.  Shared state is held in \texttt{RedisJSON} under the key \texttt{qaf:\textless{}id\textgreater{}}.  Updates are performed with optimistic locking to avoid lost writes when agents run in parallel.
+Agents are registered as LangChain tools and executed by an \texttt{LCEL} (LangChain Expression Language) graph shown in Figure~\ref{fig:lcel}.  Shared state is held in \texttt{RedisJSON} under the key \texttt{standardised-quotation-analysis-template:\textless{}id\textgreater{}}.  Updates are performed with optimistic locking to avoid lost writes when agents run in parallel.
 
 %--------------------------------------------------
 \section{Infrastructure and Deployment}

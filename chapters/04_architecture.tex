@@ -79,7 +79,7 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 
 \section{Agent Responsibilities}
 \paragraph{Planner Agent}  
-Receives a raw QAF string and applies a few-shot GPT-4 prompt that asks the model to return a JSON object with the most likely manufacturer part number.
+Receives a raw standardised quotation analysis template string and applies a few-shot GPT-4 prompt that asks the model to return a JSON object with the most likely manufacturer part number.
 The output is then passed to the Retrieval Agents.
 
 
@@ -137,7 +137,7 @@ Parsing errors with low OCR confidence ($<0.7$) raise a warning but still save p
 
 \section{Security and Cost Considerations}
 All external calls pass through BMW's outbound proxy; API secrets are managed via Azure Key Vault.  
-Estimated operating cost on an Azure D8s~v5 VM plus one A10 GPU is \(\approx 0.90\,€\) per 1 000 processed QAF lines, dominated by GPT-4 Vision tokens.
+Estimated operating cost on an Azure D8s~v5 VM plus one A10 GPU is \(\approx 0.90\,€\) per 1 000 processed standardised quotation analysis template lines, dominated by GPT-4 Vision tokens.
 
 \section{Mapping to Requirements}
 Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{sec:problem}.
