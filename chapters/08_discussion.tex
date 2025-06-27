@@ -24,18 +24,18 @@ Running a vision model at scale incurs non-trivial token costs and raises docume
 %--------------------------------------------------
 \section{Industrial Implications}
 \begin{itemize}
-  \item \textbf{Engineer Throughput}: Automating specification extraction can cut manual triage time by \mbox{60–70\,\%}, freeing engineers for higher-value tasks.
-  \item \textbf{Supplier Negotiations}: Early cost estimates derived from extracted specs enable data-driven price anchoring during RFQ rounds.
-  \item \textbf{Quality Assurance}: Provenance metadata supports audit trails required by quality standards (e.g., ISO~9001) without extra overhead.
+  \item \textbf{Engineer Throughput}: Automating the extraction of technical specifications from quotation templates can reduce manual triage and data entry time by approximately 60–70\,\%, based on our evaluation. This allows engineering teams to focus on design, validation, and supplier communication rather than repetitive documentation tasks.
+  \item \textbf{Supplier Negotiations}: By generating early, data-driven cost estimates directly from extracted specifications, procurement teams can establish more accurate price anchors during Request for Quotation (RFQ) rounds. This reduces reliance on supplier-provided data and supports more objective, evidence-based negotiations.
+  \item \textbf{Quality Assurance}: The pipeline attaches provenance metadata—such as source URLs and datasheet page numbers—to each extracted parameter. This enables traceable audit trails for quality management and compliance, without imposing additional manual effort on staff.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Future Work}
 \begin{enumerate}
-  \item \textbf{Broader Modalities}: Extend the parsing agent to X-ray or 3-D CAD drawings for mechanical parts.
-  \item \textbf{Active Learning}: Incorporate human-in-the-loop feedback to retrain prompts and ranking heuristics on low-confidence cases.
-  \item \textbf{Edge Deployment}: Explore quantised VLMs for on-prem inference where data-sovereignty rules prohibit cloud APIs.
-  \item \textbf{Dynamic Pricing Models}: Integrate commodity indices and supply-chain risk signals into the cost model for real-time updates.
+  \item \textbf{Marking Code Recognition}: Develop an upstream vision-based scanner to extract marking codes directly from component images, then map these codes to Manufacturer Part Numbers (MPNs) before entering the main pipeline. This would enable processing of loose or unlabelled parts, broadening applicability beyond cases where the MPN is explicitly available. Integrating a robust marking code–to–MPN mapping database and handling ambiguous or partial codes will be key challenges.
+  \item \textbf{Active Learning}: Incorporate human-in-the-loop feedback to iteratively improve the system. This could involve retraining prompts, updating ranking heuristics, or fine-tuning models on low-confidence or misclassified cases. Building an interface for efficient expert review and correction will accelerate adaptation to new component types and edge cases.
+  \item \textbf{Edge Deployment and Model Diversity}: Explore deployment of quantised vision-language models (VLMs) for on-premises inference, addressing data-sovereignty and privacy requirements where cloud APIs are not viable. In addition to GPT-4 Vision, evaluate alternative models such as open-source VLMs (e.g., LLaVA, MiniGPT-4, or BLIP-2) for datasheet and marking code recognition, balancing accuracy, latency, and cost for industrial use.
+  \item \textbf{Dynamic Pricing Models}: Integrate commodity indices and supply-chain risk signals into the cost model for real-time updates, enabling more responsive and market-aware price predictions.
 \end{enumerate}
 
 %--------------------------------------------------
