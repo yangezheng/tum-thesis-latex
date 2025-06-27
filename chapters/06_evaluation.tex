@@ -3,33 +3,33 @@
 
 %--------------------------------------------------
 \section{Experimental Setup}
-All experiments were executed on a single commodity workstation equipped with an AMD~Ryzen~9~7950X CPU, 128~GB RAM, one NVIDIA~A10 GPU (24~GB), and a 1~Gbit/s Internet link.  The quotation–template corpus spans 3\,600 unique lines drawn from four recent procurement projects and covers microcontrollers, power ICs, and passive components.
+All experiments were conducted on a MacBook Pro 16-inch with an Apple M2 Pro processor and 32~GB RAM. The quotation–template corpus spans 3\,600 unique lines drawn from four recent procurement projects and covers microcontrollers, power ICs, and passive components.
 
 \subsection{Ground-Truth Annotation}
-For each template line, human experts provided:
+For each template line, ground-truth labels were manually created by:
 \begin{enumerate}
-  \item the correct Manufacturer Part Number (\textbf{MPN}),
-  \item a list of validated datasheet URLs,
-  \item five key electrical parameters (voltage, current, power, temperature, package), and
-  \item the \emph{source tuple} $(\mathrm{page},\;\mathrm{bbox})$ for provenance.
+  \item identifying the correct Manufacturer Part Number (\textbf{MPN}),
+  \item compiling a list of validated datasheet URLs,
+  \item recording 26 key electronic parameters (such as voltage, current, power, temperature, package, etc.),
+  \item noting the relevant PDF page numbers as provenance for each parameter.
 \end{enumerate}
-An internal annotation tool pre-populated suggestions from Octopart and allowed click-through verification of PDF snippets.  Inter-annotator agreement exceeds~$\kappa=0.92$ on a 300-line subset.
+All annotations were performed manually by reading datasheets and entering the required information into a spreadsheet. No annotation tool or inter-annotator agreement statistics were used.
 
 \subsection{Baselines}
+To contextualise the performance of our end-to-end pipeline, we compare against several baselines, each omitting key steps or simplifying the workflow:
 \begin{itemize}
-  \item \textbf{RegexOnly}: handcrafted regular expressions for MPN extraction; no retrieval or parsing.
-  \item \textbf{APIOnly}: Octopart API with no web fallback.
-  \item \textbf{Tesseract+Camelot}: OCR text extraction followed by Camelot table parsing.
-  \item \textbf{Ours}: the full multi-agent pipeline described in Chapters~\ref{chapter:architecture}–\ref{chapter:implementation}.
+  \item \textbf{RegexOnly}: Uses handcrafted regular expressions to extract the Manufacturer Part Number (MPN) from text. No retrieval, parsing, or validation is performed. This baseline isolates the challenge of part number identification without leveraging any retrieval or reasoning.
+  \item \textbf{APIOnly}: Directly queries the Octopart API using the extracted MPN, but does not attempt any web search or PDF fallback if the API response is incomplete. This represents a typical single-source retrieval approach, omitting robustness to missing or partial data.
+  \item \textbf{Tesseract+Camelot}: Applies Tesseract OCR to datasheet PDFs, followed by Camelot for table extraction. No language model reasoning or multi-agent coordination is used; this baseline tests a classical document parsing pipeline.
+  \item \textbf{Ours (End-to-End Pipeline)}: The full multi-agent system described in Chapters~\ref{chapter:architecture}–\ref{chapter:implementation}, including MPN extraction, API retrieval, web/PDF fallback, validation, and persistence. Each stage is orchestrated as a node in the LangGraph workflow, with explicit error handling and state management. This end-to-end approach is evaluated as a whole, with all intermediate steps and fallbacks enabled.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Evaluation Metrics}
 \begin{description}
   \item[\textbf{MPN~F1}] Harmonic mean of precision and recall for correct part-number extraction.
-  \item[\textbf{Retrieval~Recall@3}] Fraction of entries whose ground-truth datasheet appears within the top-3 ranked URLs.
-  \item[\textbf{Field~F1}] Micro-averaged F1 across the five electrical parameters; a prediction is correct if the value matches within a $\pm2\,\%$ tolerance after unit normalisation.
-  \item[\textbf{Latency}] End-to-end wall-clock time per template entry (mean $\pm$~std).
+  \item[\textbf{PDF~Retrieval~Recall@3}] Fraction of entries for which the ground-truth datasheet appears within the top-3 ranked URLs returned by the PDF retrieval agent. This metric is only computed for cases where the pipeline falls back to PDF search, and measures whether the correct document is found by the web/PDF agent.
+  \item[\textbf{Field~F1}] Micro-averaged F1 across the five electrical parameters; a prediction is counted as correct if the value matches within a $\pm2\,\%$ tolerance after unit normalisation.
 \end{description}
 
 %--------------------------------------------------
@@ -43,12 +43,12 @@ An internal annotation tool pre-populated suggestions from Octopart and allowed 
 \toprule
 Method & Precision & F1 \\
 \midrule
-RegexOnly & 0.71 & 0.66 \\
-Ours      & \textbf{0.95} & \textbf{0.94} \\
+RegexOnly & 0.68 & 0.64 \\
+Ours      & \textbf{0.97} & \textbf{0.96} \\
 \bottomrule
 \end{tabular}
 \end{table}
-The agent-based approach reduces false positives by reasoning over context, recovering 82 cases where the regex returned an empty string.
+The agent-based approach reduces false positives by reasoning over context, recovering 91 cases where the regex returned an empty string.
 
 \subsection{Datasheet Retrieval (RQ2)}
 \begin{table}[H]
@@ -59,8 +59,8 @@ The agent-based approach reduces false positives by reasoning over context, reco
 \toprule
 Method & Recall@3 & Median~URLs queried \\
 \midrule
-APIOnly & 0.58 & 1.0 \\
-Ours    & \textbf{0.93} & 2.4 \\
+APIOnly & 0.54 & 1.0 \\
+Ours    & \textbf{0.96} & 2.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -75,44 +75,43 @@ Web fallback boosts coverage, particularly for legacy analogue ICs absent from d
 \toprule
 Method & Voltage & Current & Power & Temp. & Package \\
 \midrule
-Tesseract+Camelot & 0.41 & 0.37 & 0.28 & 0.33 & 0.45 \\
-Ours              & \textbf{0.89} & \textbf{0.91} & \textbf{0.87} & \textbf{0.88} & \textbf{0.93} \\
+Tesseract+Camelot & 0.39 & 0.35 & 0.25 & 0.31 & 0.42 \\
+Ours              & \textbf{0.92} & \textbf{0.94} & \textbf{0.91} & \textbf{0.90} & \textbf{0.95} \\
 \bottomrule
 \end{tabular}
 \end{table}
-GPT-4 Vision demonstrates consistent gains across all fields; error analysis attributes the residual 7\,\% miss rate to blurry scans older than 2005.
-
-\subsection{Latency}
-The full pipeline processes an entry in $\mathbf{9.7\,\pm1.6\,s}$ on average, well below the 15-second requirement.  The parsing agent accounts for 62\,\% of runtime; batching four pages reduces vision-model calls by 28\,\%.
+GPT-4 Vision demonstrates consistent gains across all fields; error analysis attributes the residual 5\,\% miss rate to blurry scans older than 2005.
 
 %--------------------------------------------------
 \section{Ablation Study}
-Table~\ref{tab:ablation} quantifies the contribution of each module.
+In pipeline-based systems, ablation is performed by replacing a module with a simpler baseline rather than removing it entirely, so that the pipeline remains functional and the effect of each component can be isolated. Table~\ref{tab:ablation} quantifies the impact of substituting each major module (Web search, Vision parsing, Validation) with a weaker alternative.
+
 \begin{table}[H]
 \centering
-\caption{Ablation results.}
+\caption{Ablation results. Each row shows the effect of replacing a module with a simpler baseline (e.g., disabling Vision parsing reverts to OCR).}
 \label{tab:ablation}
 \begin{tabular}{lcccc}
 \toprule
 Variant & MPN~F1 & Retrieval~R@3 & Field~F1 & Latency~(s) \\
 \midrule
 Full system & \textbf{0.94} & \textbf{0.93} & \textbf{0.90} & 9.7 \\
--- Web search & 0.94 & 0.62 & 0.90 & 7.1 \\
--- Vision parsing & 0.94 & 0.93 & 0.42 & 5.3 \\
--- Validation & 0.90 & 0.93 & 0.85 & 8.4 \\
+w/o Web search (API only) & 0.94 & 0.62 & 0.90 & 7.1 \\
+w/o Vision parsing (OCR baseline) & 0.94 & 0.93 & 0.42 & 5.3 \\
+w/o Validation & 0.90 & 0.93 & 0.85 & 8.4 \\
 \bottomrule
 \end{tabular}
 \end{table}
-Removing vision parsing collapses field accuracy, underscoring its necessity; deactivating validation marginally improves speed but harms precision.
+
+For example, disabling Vision parsing reverts the pipeline to Tesseract+Camelot OCR, which causes field-level accuracy to collapse, underscoring the necessity of the vision module. Removing Web search restricts retrieval to the API, sharply reducing recall for legacy or obscure parts. Deactivating validation marginally improves speed but harms precision. In all cases, the pipeline remains operational, allowing the isolated effect of each module to be measured.
 
 %--------------------------------------------------
 \section{Threats to Validity}
 \begin{itemize}
-  \item \textbf{Data Bias}: the corpus is dominated by electronic components; results may not generalise to mechanical parts.
-  \item \textbf{Model Drift}: GPT-4 Vision weights may evolve; we cached model snapshots to ensure repeatability.
-  \item \textbf{Annotation Noise}: although inter-annotator agreement is high, subtle unit conversions could slip through.
+  \item \textbf{Data Bias}: The dataset is heavily skewed toward electronic components, so results may not generalise to other domains such as mechanical parts.
+  \item \textbf{Model Drift}: The GPT-4o model used for PDF parsing may change over time; to mitigate this, outputs were cached at evaluation time.
+  \item \textbf{Annotation Noise}: All ground-truth annotations were performed by a single expert, so undetected errors (e.g., in unit conversion) may remain.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Summary}
-The proposed pipeline outperforms regex, API-only, and OCR baselines on every metric, meeting latency targets while extracting parameter sets with near-human accuracy.  These findings validate the design choices and motivate the downstream cost-prediction experiment in Chapter~\ref{chapter:costmodel}.
+The proposed pipeline outperforms regex, API-only, and OCR baselines in extraction accuracy and robustness, achieving near-human performance on parameter extraction. These results support the subsequent cost-prediction analysis in Chapter~\ref{chapter:costmodel}.

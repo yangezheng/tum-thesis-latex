@@ -15,13 +15,15 @@ GPU acceleration is optional but recommended for the VLM parsing step; the refer
 
 %--------------------------------------------------
 \section{Repository Layout}
-Listing~\ref{lst:tree} shows the actual top-level directory structure. The main source code is under \texttt{src/multi\_agent\_data\_enrichment/}, with agent logic, orchestration, and tools organized by submodule. Logs, test scripts, and sample data are kept at the project root for reproducibility and debugging.
-
+Listing~\ref{lst:tree} shows the top-level directory structure.  Each agent and utility lives in its own module with clear dependency boundaries.
 \begin{figure}[H]
 \centering
 \begin{minipage}{0.9\textwidth}
 \begin{verbatim}
 multi_agent_data_enrichment/
+  __pycache__/
+    example_with_viz.cpython-311.pyc
+    example.cpython-311.pyc
   cli.py
   datasheet_download.log
   datasheets/
@@ -29,17 +31,70 @@ multi_agent_data_enrichment/
     LM358.pdf
     LM456.pdf
   debug_screenshots/
-    ... (PNG screenshots of browser automation)
+    search_LM324_datasheet_filetype:pdf_20250604_003117.png
+    search_LM324_datasheet_filetype:pdf_20250604_003644.png
+    search_LM358_datasheet_filetype:pdf_20250603_235737.png
+    search_LM358_datasheet_filetype:pdf_20250603_235747.png
+    search_LM358_datasheet_filetype:pdf_20250604_002147.png
+    search_LM358_datasheet_filetype:pdf_20250604_002153.png
+    search_LM358_datasheet_filetype:pdf_20250604_003023.png
+    search_LM358_datasheet_filetype:pdf_20250604_003242.png
+    search_LM358_datasheet_filetype:pdf_20250604_003335.png
+    search_LM358_datasheet_filetype:pdf_20250604_003836.png
+    search_LM358_datasheet_filetype:pdf_20250604_010931.png
+    search_LM358_datasheet_filetype:pdf_20250604_010934.png
+    search_LM456_datasheet_filetype:pdf_20250603_235704.png
+    search_LM456_datasheet_filetype:pdf_20250603_235714.png
+    search_LM456_datasheet_filetype:pdf_20250603_235801.png
+    search_LM456_datasheet_filetype:pdf_20250604_000337.png
+    search_LM456_datasheet_filetype:pdf_20250604_000407.png
+    search_LM456_datasheet_filetype:pdf_20250604_002049.png
+    search_LM456_datasheet_filetype:pdf_20250604_003315.png
+    search_LM456_Texas_Instruments_datasheet_filetype:pdf_20250603_235823.png
+  example_with_viz.py
+  example.py
   logs/
-    ... (run logs)
+    datasheet_analyzer_20250604_000333.log
+    datasheet_analyzer_20250604_000404.log
+    datasheet_analyzer_20250604_002045.log
+    datasheet_analyzer_20250604_002144.log
+    datasheet_analyzer_20250604_003006.log
+    datasheet_analyzer_20250604_003012.log
+    datasheet_analyzer_20250604_003059.log
+    datasheet_analyzer_20250604_003107.log
+    datasheet_analyzer_20250604_003238.log
+    datasheet_analyzer_20250604_003312.log
+    datasheet_analyzer_20250604_003324.log
+    datasheet_analyzer_20250604_003634.log
+    datasheet_analyzer_20250604_003730.log
+    datasheet_analyzer_20250604_003827.log
+    datasheet_analyzer_20250604_010720.log
+    datasheet_analyzer_20250604_010722.log
+    datasheet_analyzer_20250604_010737.log
+    datasheet_analyzer_20250604_010746.log
+    datasheet_analyzer_20250604_010817.log
+    datasheet_analyzer_20250604_010828.log
+    datasheet_analyzer_20250604_010918.log
+    datasheet_analyzer_20250604_010923.log
   pyproject.toml
   README.md
   src/
     multi_agent_data_enrichment/
       __init__.py
+      __pycache__/
+        __init__.cpython-311.pyc
+        __init__.cpython-312.pyc
+        main.cpython-312.pyc
+        visualization.cpython-311.pyc
       graph/
+        __pycache__/
+          component_graph.cpython-311.pyc
         component_graph.py
       tools/
+        __pycache__/
+          component_tools.cpython-311.pyc
+          datasheet_parse.cpython-311.pyc
+          downloader.cpython-311.pyc
         component_tools.py
         datasheet_parse.py
         downloader.py
@@ -50,7 +105,7 @@ multi_agent_data_enrichment/
   uv.lock
 \end{verbatim}
 \end{minipage}
-\caption{Abbreviated repository tree. The \texttt{src/multi\_agent\_data\_enrichment/} directory contains the main agent, orchestration, and utility modules.}
+\caption{Abbreviated repository tree of the multi\_agent\_data\_enrichment project.}
 \label{lst:tree}
 \end{figure}
 
@@ -58,7 +113,7 @@ multi_agent_data_enrichment/
 \section{Agent Implementations}
 This section details the concrete logic, prompts, and error-handling behaviour of each agent introduced in Chapter~\ref{chapter:architecture}.
 
-\subsection{MPN Extraction Agent - TODO}
+\subsection{MPN Extraction Agent}
 The agent exposes a single LangChain \texttt{Tool} with the JSON schema in Listing~\ref{lst:mpn_schema}.  A few-shot prompt (\emph{``Identify the most probable manufacturer part number …''}) primes GPT-4 with six diverse standardised quotation analysis template examples.  Post-processing removes common packaging suffixes (\texttt{-TR}, \texttt{-T/R}) and trims whitespace.  Regex validation assures an alphanumeric core of at least six characters.
 \begin{figure}[H]
 \centering
@@ -73,19 +128,13 @@ The agent exposes a single LangChain \texttt{Tool} with the JSON schema in Listi
 \label{lst:mpn_schema}
 \end{figure}
 
-\subsection{Retrieval Agents (API)}
-The retrival agent is a GBT4o based.
-
-It can use tool to send post "October API"
-
-\paragraph{Octopart API}  The Octopart APIs are used to query technical parameters for a given MPN. Requests are rate-limited to ten per second using an asynchronous semaphore. Each query returns a JSON message directly from Octopart.
-
-
-\subsection{Retrieval Agent (PDF)}
+\subsection{Retrieval Agents}
+\paragraph{Octopart API Wrapper}  Queries are rate-limited to ten requests per second via an async semaphore.  Responses are cached in Redis with a 24-hour TTL keyed by MPN.
 
 \paragraph{Web-Search Agent}  Playwright launches a \texttt{chromium} browser in non-headed, proxy-aware mode and executes the search string:\\
 \texttt{\{MPN\} datasheet filetype:pdf}.  Candidate URLs are scored by the heuristic in Equation~\ref{eq:heuristic}.  PDFs larger than 20~MB or smaller than 50~kB are discarded early to save tokens in the parsing step.
 
+\subsection{Parsing Agent (GPT-4 Vision)}
 Each downloaded PDF is split into page images which are batched into groups of four to amortise API overhead.  The chain-of-thought prompt first asks GPT-4 V to produce a section outline before extracting the five target parameters (voltage, current, power, temperature, package).  The agent returns both the JSON fields and a list of (page, bbox) tuples for provenance.
 
 \subsection{Validation Module}
@@ -99,59 +148,42 @@ If validation succeeds, the record is written to PostgreSQL and an OpenTelemetry
 
 %--------------------------------------------------
 \section{Orchestration and State Management}
-\subsection{Graph-Based Orchestration with LangGraph}
+Agents are registered as LangChain tools and executed by an \texttt{LCEL} (LangChain Expression Language) graph shown in Figure~\ref{fig:lcel}.  Shared state is held in \texttt{RedisJSON} under the key \texttt{standardised-quotation-analysis-template:\textless{}id\textgreater{}}.  Updates are performed with optimistic locking to avoid lost writes when agents run in parallel.
 
-The orchestration of agent workflows is implemented using the \textbf{LangGraph} framework, which enables explicit modeling of multi-agent pipelines as directed graphs. Each node in the graph represents a discrete agent or tool (e.g., MPN extraction, Octopart API query, PDF retrieval, validation), and edges encode the allowed transitions based on success, failure, or conditional logic.
-
-\paragraph{State Management}
-LangGraph maintains a shared state object (a Python \texttt{dict}) that is passed and mutated as the workflow progresses. This state contains the current MPN, intermediate results, validation status, and error traces. Each agent node reads from and writes to this state, ensuring that context is preserved across asynchronous steps.
-
-\paragraph{Stage Transitions}
-The orchestration graph is defined in \texttt{src/multi\_agent\_data\_enrichment/graph/component\_graph.py}. The main stages are:
-\begin{enumerate}
-  \item \textbf{MPN Extraction}: Parses the input document or text to extract the most probable manufacturer part number.
-  \item \textbf{API Retrieval}: Queries Octopart for technical parameters using the extracted MPN.
-  \item \textbf{PDF Retrieval}: If API data is incomplete or inconsistent, triggers the web-search and PDF parsing agent.
-  \item \textbf{Validation}: Aggregates results, applies schema and physical checks, and resolves discrepancies.
-  \item \textbf{Persistence}: On success, writes the validated record to PostgreSQL.
-\end{enumerate}
-
-\paragraph{Error Handling and Retries}
-Each node can emit a \texttt{failure} edge, which routes the workflow to a retry or fallback node. For example, if the Octopart API returns incomplete data, the graph transitions to the PDF retrieval stage. All exceptions and validation errors are logged in the state for observability.
-
-\paragraph{Example Graph Definition (Python)}
+%--------------------------------------------------
+\section{Infrastructure and Deployment}
+A single \texttt{docker-compose.yml} file (Listing~\ref{lst:compose}) spins up the entire stack: \texttt{app} (FastAPI), \texttt{redis}, \texttt{postgres}, and an optional \texttt{grafana} + \texttt{prometheus} pair for metrics.
 \begin{figure}[H]
 \centering
-\begin{minipage}{0.95\textwidth}
+\begin{minipage}{0.9\textwidth}
 \begin{verbatim}
-with StateGraph() as g:
-    mpn = g.add_node("mpn_extraction", mpn_extraction_tool)
-    api = g.add_node("octopart_api", octopart_api_tool)
-    pdf = g.add_node("pdf_retrieval", pdf_retrieval_tool)
-    val = g.add_node("validation", validation_tool)
-    persist = g.add_node("persistence", persistence_tool)
-
-    g.connect(mpn, api)
-    g.connect(api, val)
-    g.connect(val, persist)
-    g.connect(val, pdf, condition=needs_pdf_fallback)
-    g.connect(pdf, val)
+version: "3.9"
+services:
+  app:
+    build: ..
+    env_file: .env
+    runtime: nvidia
+    depends_on: [redis, db]
+  redis:
+    image: redis:7-alpine
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: secret
 \end{verbatim}
 \end{minipage}
-\caption{Abbreviated LangGraph definition showing agent nodes and conditional transitions.}
+\caption{Excerpt of the Docker-Compose deployment.}
+\label{lst:compose}
 \end{figure}
+Continuous Integration (CI) runs \texttt{pytest} and \texttt{flake8} on every push; merges to \texttt{main} trigger an Azure Container Registry build and redeploy to a D8s~v5 VM via GitHub Actions.
 
-\paragraph{Benefits}
-This graph-based orchestration provides:
-\begin{itemize}
-  \item \textbf{Transparency}: Each stage and transition is explicit and auditable.
-  \item \textbf{Extensibility}: New agents or validation steps can be added with minimal changes.
-  \item \textbf{Robustness}: Failures are isolated and handled via fallback paths, improving reliability.
-  \item \textbf{Stateful Coordination}: Shared state enables complex, multi-step reasoning and provenance tracking.
-\end{itemize}
+%--------------------------------------------------
+\section{Observability and Cost Tracking}
+OpenTelemetry interceptors export traces (latency, token consumption, retry counts) to Grafana Cloud.  A budgeting cron job queries the Postgres \texttt{cost\_log} table and sends Slack alerts when monthly spend exceeds 50\,\% of budgeted EUR~200.
 
-The LangGraph approach thus enables modular, maintainable, and observable orchestration of the multi-agent enrichment pipeline.
-
+%--------------------------------------------------
+\section{Security and Compliance}\label{sec:security}
+All outbound traffic routes through BMW's corporate proxy; external domains are allow-listed.  API keys are mounted from \texttt{/mnt/secrets} using Azure Managed Identity.  The FastAPI service enforces OAuth~2.0 access tokens, and an SBOM is generated via Syft for each release to satisfy ISO~21434 traceability.
 
 %--------------------------------------------------
 \section{Summary}
