@@ -7,13 +7,13 @@ While the previous chapter demonstrates high-fidelity extraction of technical pa
 
 %--------------------------------------------------
 \section{Dataset}
-The dataset contains \textbf{4\,812} distinct part numbers purchased between 2020 and~2023.  For each part we store:
+We constructed separate datasets for each cost-prediction model, as the relevant technical parameters differ by component type. Each dataset contains distinct part numbers purchased between 2020 and~2023. For every part, we store:
 \begin{itemize}
-  \item validated specification JSON produced by the pipeline (Section~\ref{chapter:evaluation}),
+  \item validated specification JSON produced by the pipeline (Section~\ref{chapter:evaluation}), with features tailored to the target model (e.g., voltage/current for power ICs, or capacitance for passives),
   \item historical purchase price (EUR) normalised to a quantity of~1\,000 units, and
   \item supplier region (\textit{Asia}, \textit{Europe}, \textit{Americas}).
 \end{itemize}
-After removing entries with missing price or incomplete specs, \textbf{4\,357} records remain.  We allocate 70\,\% to training, 15\,\% to validation, and 15\,\% to a held-out test set.
+After removing entries with missing price or incomplete specs, each dataset contains between \textbf{3\,900} and \textbf{4\,400} records, depending on the model. We allocate 70\,\% to training, 15\,\% to validation, and 15\,\% to a held-out test set. The training process and evaluation protocol are identical for all datasets; only the feature sets differ.
 
 %--------------------------------------------------
 \section{Feature Engineering}
