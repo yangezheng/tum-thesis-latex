@@ -78,43 +78,91 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 
 
 \section{Agent Responsibilities}
+
 \paragraph{MPN Agent}  
-The MPN Agent receives a raw standardised quotation analysis template line, extracts the most likely Manufacturer Part Number (MPN) using a few-shot GPT-4 prompt, and forwards the extracted MPN to the Retrieval Agent. The Retrieval Agent then attempts to find the technical parameters of the component based on the provided MPN.
+The MPN Agent receives a raw standardised quotation analysis template line and extracts the most likely Manufacturer Part Number (MPN) using GPT-3.5. Both zero-shot and few-shot prompting strategies were evaluated. The extracted MPN is then forwarded to the Retrieval Agent, which attempts to find the technical parameters of the component based on the provided MPN.
 
 
 \paragraph{Retrieval Agent (API)}  
-Queries the Octopart REST API with the extracted MPN.  
-If the API returns \verb|datasheets| with a direct PDF link and the file size is within 50 kB–20 MB, the link is forwarded to the Parsing Agent.
+Queries the Octopart REST API with the extracted MPN to directly obtain structured technical parameters for the component.  
+For each supported component category, the agent extracts the predefined set of technical fields from the API response and forwards them for schema resolution and validation.  
+No PDF retrieval or parsing is required in this path, making the process more efficient and reliable than PDF-based extraction.
 
 \paragraph{Retrieval Agent (PDF)}  
-Uses Playwright to perform a Google search of the form  
+When the API does not provide sufficient technical parameters, the system invokes the PDF Retrieval Agent. This agent uses Playwright to automate a Google search with the query  
 \texttt{\{MPN\} datasheet filetype:pdf}.  
-% Results are scored by the reliability heuristic in Equation~\eqref{eq:heuristic}.  
-The most likely PDFs are downloaded for validation.
-after the pdfs are downloaded, the pdf agent will use a chain of thought prompt to extract the most likely parameters from the pdf.
+Candidate PDF URLs are ranked using a reliability heuristic (see Equation~\ref{eq:heuristic}), prioritizing trusted sources and plausible datasheet characteristics. The top-ranked PDFs are downloaded for further analysis.  
+After downloading, the agent applies a vision language model (e.g., GPT-4 Vision) with a chain-of-thought prompt to parse the datasheet and extract the most likely technical parameters directly from the PDF content.
 
 \paragraph{Field Fusion}
-The field fusion module will take the output from the retrieval agents and compare them to the standardised quotation analysis template.
-The field will output a json object with the most likely parameters, the output of the field fusion module is then passed to the validation module.
+The field fusion module merges and reconciles outputs from multiple retrieval agents (API and PDF extraction) to produce a single, most likely set of technical parameters in a standardized format. It resolves conflicts and fills gaps by comparing agent outputs against the standardised quotation analysis template, ensuring the best possible data is selected for each field. The result is a JSON object containing the fused parameters, which is then passed to the validation module for further checks.
 
 \paragraph{Validation Module}  
-Executes three layers of checks:
+The validation module applies three layers of checks:
 \begin{enumerate}
-  \item JSON-Schema validation (types + units),
-  \item range rules (e.\,g.\ $0 < V_{max} < 1000V$),
-\end{enumerate}  
-Failures trigger a dashed feedback edge to the Web Retrieval Agent for retry.
+  \item \textbf{JSON-Schema validation:} Ensures that all extracted fields have the correct types and units.
+  \item \textbf{Physical range rules:} Verifies that values fall within plausible physical limits (e.g., $0 < V_{\max} < 1000\,\mathrm{V}$).
+  \item \textbf{Cross-source consistency:} Compares key technical parameters extracted from the datasheet with those returned by the Octopart API. If any value differs by more than 5\%, this discrepancy triggers a retry via the Web Retrieval Agent.
+\end{enumerate}
+If any check fails, a dashed feedback edge routes control back to the Web Retrieval Agent for another attempt.
 
 \paragraph{Cost Model Example}  
-As a sample downstream task, a cost model is implemented by training an random forest regressor on validated specification records and historical prices. This demonstrates how the structured output can be used for economic analysis or price prediction.
+A major downstream application enabled by the structured data pipeline is automated cost estimation. This is achieved by constructing a cost model that predicts the likely unit price of a component based on its technical attributes. The process can be broken down into the following steps:
+
+\begin{itemize}
+  \item \textbf{Downstream Application:}  
+    Automated cost estimation using structured data extracted by the multi-agent system.
+  
+  \item \textbf{Model Construction:}
+    \begin{itemize}
+      \item Train a random forest regressor.
+      \item Use features from validated specification records (e.g., voltage, current, package type, and other technical parameters).
+      \item Pair these features with historical price data.
+    \end{itemize}
+  
+  \item \textbf{Training Process:}
+    \begin{itemize}
+      \item Aggregate high-confidence, schema-compliant records from the database.
+      \item Perform feature engineering (such as normalizing voltages and encoding package types).
+      \item Train and evaluate the model using historical pricing as the target variable.
+    \end{itemize}
+  
+  \item \textbf{Integration:}
+    \begin{itemize}
+      \item Integrate the trained cost model into the pipeline.
+      \item As soon as a new component's parameters are extracted and validated, feed them into the regressor.
+      \item Generate real-time price estimates for new or unseen parts.
+    \end{itemize}
+  
+  \item \textbf{Benefits:}
+    \begin{itemize}
+      \item Enables automated quotation, procurement, and price benchmarking.
+      \item Unlocks downstream machine learning applications for economic analysis, price optimization, and decision support.
+    \end{itemize}
+\end{itemize}
+
+This structured, list-based approach highlights each stage of the cost model pipeline and emphasizes how the multi-agent system's outputs facilitate advanced ML-driven applications.
 
 \section{Agent Coordination and Memory}
-Agents are orchestrated using the LangGraph framework, which enables flexible, graph-based workflows and agent composition.  
-\begin{itemize}
-  \item \textbf{Function-calling interface}: Each agent exposes a JSON schema; GPT-4 (or other LLM) selects and invokes the appropriate function based on the current task node in the graph.
-  \item \textbf{Shared State}: LangGraph maintains a mutable state object that is passed between agents as the workflow progresses. This state contains intermediate results (such as \verb|mpn|, \verb|pdf_path|, validation flags) and is accessible to all agents at each step, enabling coordination without explicit external storage.
-  \item \textbf{Retry Logic}: Retry and fallback behavior is implemented within the graph structure—nodes can be configured to handle exceptions, apply exponential backoff (1 s, 2 s, 4 s), and reroute control to fallback agents if the number of attempts exceeds 3.
-\end{itemize}
+Agent coordination is implemented using the LangGraph framework, which enables flexible, graph-based orchestration of specialized agents. The system exclusively uses GPT-4o as the function-calling LLM at each node, allowing for consistent, high-quality reasoning and function selection throughout the workflow.
+
+\begin{table}[H]
+  \centering
+  \caption{Key aspects of agent coordination with LangGraph and GPT-4o.}
+  \begin{tabular}{p{3.5cm} p{10cm}}
+    \hline
+    \textbf{Aspect} & \textbf{Description} \\
+    \hline
+    Function-calling interface & Each agent exposes a JSON schema describing its function signature. GPT-4o selects and invokes the appropriate agent function at each node, using the schema to structure inputs and outputs. \\
+    Shared state & LangGraph maintains a mutable state object (e.g., \verb|mpn|, \verb|pdf_path|, validation flags, extracted parameters) that is passed between nodes. All agents can read and update this state, enabling seamless context sharing and coordination without external storage. \\
+    Retry and fallback logic & The workflow graph encodes retry and fallback behavior: nodes can handle exceptions, apply exponential backoff (e.g., 1\,s, 2\,s, 4\,s), and reroute control to fallback agents or alternative paths if a step fails repeatedly (typically after 3 attempts). \\
+    Memory and provenance & The state object accumulates intermediate results and provenance information (such as source URLs, page numbers, or bounding boxes), supporting traceability and robust downstream processing. \\
+    Dynamic routing & The graph structure allows for conditional branching and dynamic rerouting based on agent outputs or validation results, ensuring resilient and adaptive execution. \\
+    \hline
+  \end{tabular}
+\end{table}
+
+This approach enables modular, interpretable, and memory-aware multi-agent workflows, with robust error handling and efficient state management throughout the pipeline.
 
 \section{Source Ranking Heuristic}
 When ranking candidate PDF URLs for datasheet retrieval, the system evaluates each source using a composite cost score that reflects both technical and content-based criteria. For each candidate URL $u$, the following factors are considered:
@@ -122,26 +170,26 @@ When ranking candidate PDF URLs for datasheet retrieval, the system evaluates ea
     \item \textbf{Domain Trust Level:} Manufacturer domains are preferred (score 0), followed by trusted distributors (score 1), with all other domains scored as 2.
     \item \textbf{Direct PDF Link:} URLs ending with \texttt{.pdf} are favored (score 0), while indirect or non-PDF links are penalized (score 1).
     \item \textbf{Historical Failure Rate:} An exponentially decayed average of previous download failures from the same host, to deprioritize unreliable sources.
-    \item \textbf{PDF Size:} Files are checked to ensure they fall within an acceptable size range (e.g., 50 kB–20 MB); extremely small or large files are penalized.
-    \item \textbf{Number of Pages:} PDFs with a plausible number of pages for a datasheet (e.g., 1–20) are preferred; outliers are deprioritized.
-    \item \textbf{Keyword Presence:} The system scans the PDF (or its metadata) for key terms such as ``specification,'' ``datasheet,'' or the target MPN, boosting the score for matches.
+    \item \textbf{PDF Size and Number of Pages:} The system first checks if the file size and page count are within acceptable ranges (e.g., 50\,kB--20\,MB and 1--20 pages). If so, the PDF is downloaded and checked individually; otherwise, the candidate is skipped.
+    \item \textbf{Keyword Presence:} After downloading, the PDF (or its metadata) is scanned for key terms such as ``specification,'' ``datasheet,'' or the target MPN, which can boost the score for matches.
 \end{itemize}
 The overall cost is computed as a weighted sum of these features:
 \begin{equation}
 \label{eq:heuristic}
-\mathrm{cost}(u) = w_1 \cdot \mathrm{domain}(u) + w_2 \cdot \mathrm{pdfWeight}(u) + w_3 \cdot \mathrm{failRate}(u) + w_4 \cdot \mathrm{sizePenalty}(u) + w_5 \cdot \mathrm{pagePenalty}(u) - w_6 \cdot \mathrm{keywordBonus}(u)
+\resizebox{\linewidth}{!}{$
+\mathrm{cost}(u) = w_1 \cdot \mathrm{domain}(u) + w_2 \cdot \mathrm{pdfLink}(u) + w_3 \cdot \mathrm{failRate}(u) - w_4 \cdot \mathrm{keywordBonus}(u)
+$}
 \end{equation}
-where $w_1, \ldots, w_6$ are tunable weights reflecting the importance of each criterion. Lower cost scores indicate higher-priority candidates for download and parsing.
+where $w_1, \ldots, w_4$ are tunable weights reflecting the importance of each criterion. Lower cost scores indicate higher-priority candidates for download and parsing.
 
 \section{Data Storage and Logging}
 After downloading each PDF, the file is uploaded to Azure Blob Storage. The Azure Blob link, together with its original source URL, is stored in a PostgreSQL database hosted on Azure. The validated specification fields are stored directly in dedicated columns of the PostgreSQL table (rather than as a JSON blob), along with the \verb|mpn|, provenance information, and the Azure Blob link and origin.
 
 \section{Fault Tolerance}
-If both retrieval agents fail, the system stores a \verb|status = "unresolved"| entry for manual triage.  
-Parsing errors with low OCR confidence ($<0.7$) raise a warning but still save partially validated fields, ensuring \emph{at-least-once} data capture.
+If retrieval agents fail, the system records a \verb|status = "unresolved"| entry instead of leaving fields empty. This explicit logging ensures that failures are traceable and can be addressed through manual triage.
 
 \section{Mapping to Requirements}
-Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{sec:problem}.
+Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{chapter:problem}.
 
 \begin{table}[ht]
   \centering
@@ -150,12 +198,12 @@ Table~\ref{tab:reqmap} summarises how architectural components satisfy the autom
   \begin{tabular}{ll}
     \hline
     Requirement & Fulfilled by \\\hline
-    R1 Robust MPN extraction & MPN Extraction Agent (LLM + regex) \\
-    R2 Adaptive retrieval    & API + Web Retrieval Agents, heuristic ranking \\
+    R1 Robust MPN extraction & MPN Extraction Agent (GPT-4o + regex) \\
+    R2 Adaptive retrieval    & API + Web Retrieval Agents, heuristic ranking, LangGraph dynamic routing \\
     R3 Multi-modal parsing   & VLM Parsing Agent (GPT-4 Vision) \\
-    R4 Schema validation     & Validation Module (JSON Schema, range rules) \\
-    R5 Traceability          & Provenance storage (page, bbox) \\
-    R6 Scalability           & Redis memory, async Playwright, GPU offload \\\hline
+    R4 Schema validation     & Validation Module (JSON Schema, range rules, retry/fallback logic) \\
+    R5 Traceability          & Provenance storage (state object accumulation: page, bbox, source URL) \\
+    R6 Scalability           & LangGraph concurrency, Redis memory, async Playwright, GPU offload \\\hline
   \end{tabular}
 \end{table}
 
