@@ -22,64 +22,57 @@ Example:
 \ttfamily PI3USB9281ZLE\_EX   20V Vbus Switch, TQFN-14, -40–85°C
 \end{center}
 
-\paragraph{C2: Missing Identifier-to-Parameter Mapping}
-Even after correctly extracting an MPN, there is no comprehensive public or commercial database that reliably maps part numbers to their technical parameters—not even major distributors provide complete coverage.
-This forces systems to extract parameters directly from datasheets, introducing additional complexity and dependence on document parsing.
+\paragraph{C2: Incomplete Identifier-to-Parameter Mapping}
+Even after successfully extracting an MPN, there is no single public or commercial database that provides comprehensive coverage mapping part numbers to their technical parameters. Some third-party distributors offer partial mappings, but their databases are often incomplete or inconsistent, and many parts are missing or lack detailed specifications. As a result, systems cannot rely solely on these sources and must extract parameters directly from datasheets, which adds significant complexity and places greater demands on document parsing capabilities.
 
 \paragraph{C3: Datasheet Discovery and Access}
-Locating a reliable datasheet for a given MPN involves searching across:
+Locating a reliable datasheet for a given MPN typically follows this order of preference:
 \begin{enumerate}
-\item manufacturer websites (high trust),
-\item distributor platforms (moderate trust),
-\item third-party mirrors (low trust, often behind captchas or broken links).
+    \item \textbf{Manufacturer website:} Most trusted and up-to-date source. However, datasheets may be missing, hidden behind registration walls, or difficult to find due to poor navigation.
+    \item \textbf{Distributor platforms:} Generally good coverage and easier access, but may not always have the latest or most complete datasheets.
+    \item \textbf{Third-party mirror sites:} Least reliable; often present captchas, broken links, or outdated documents.
 \end{enumerate}
-Selecting the most reliable source requires balancing trust, accessibility, and past success rates.
+In practice, engineers and automated systems must balance trustworthiness, accessibility, and likelihood of success, often falling back to less preferred sources when necessary to ensure datasheet retrieval.
 
-\paragraph{C4: Parameter Extraction from Unstructured Documents}
-Datasheets are often long, unstructured PDFs with inconsistent formatting.
-Technical parameters may appear in dense tables, inline text, or charts, and standard extraction tools frequently miss context, units, or formatting—compromising accuracy.
+\paragraph{C4: Parameter Extraction from Semi-Structured, Inconsistently Formatted Documents}
+Datasheets are typically long, semi-structured PDFs that combine text, tables, and diagrams, but exhibit significant variation in layout and formatting across manufacturers and part types.
+Technical parameters may appear in dense tables, inline prose, or embedded within figures and charts.
+Standard extraction tools often struggle to correctly interpret context, units, or formatting, leading to missed or inaccurate values—especially when table structures are irregular or when key information is split between multiple sections.
 
 \paragraph{C5: Parameter Alignment Across Sources}
-Technical specifications for a given part may be scattered across multiple sources—for example, partially listed on a distributor's website and partially extracted from the manufacturer's datasheet.
-These representations often differ in terminology, format, precision, or units.
-Reconciling this fragmented information requires normalization, deduplication, and conflict resolution to generate a consistent and accurate parameter set.
+Technical parameters for a given part are often available from multiple sources, such as distributor APIs and manufacturer datasheets. However, these sources may provide overlapping, incomplete, or even conflicting information—differing in terminology, units, or value precision. In practice, our pipeline first attempts to retrieve parameters from distributor APIs, and only extracts missing fields from datasheets as needed. This approach introduces the challenge of aligning and reconciling parameter values across sources. Even with this fallback strategy, discrepancies can arise (e.g., different units, naming conventions, or value ranges). Addressing this requires at minimum a rule-based alignment system: normalizing units, deduplicating fields, and defining source priorities or conflict-resolution rules. More advanced solutions—such as confidence scoring or manual review of conflicts—remain open research questions and are identified as areas for future work.
 
 \paragraph{C6: Provenance and Traceability Requirements}
-For safety-critical or compliance-sensitive applications, it's not enough to extract technical parameters—each value must be traceable to its original source.
-This includes metadata such as the document name, page number, table or bounding box location, and source type (e.g., datasheet vs. distributor site).
-Lack of provenance undermines trust in the extracted data and complicates manual verification or auditing by engineers.
+For every extracted parameter, the system must record detailed provenance information to ensure full traceability. This includes documenting whether the value was obtained from a distributor API or extracted from a datasheet. If the source is a datasheet, the provenance must specify the exact URL from which the datasheet was downloaded and the page number where the parameter was found. Additional metadata such as the document name, table or bounding box location, and source type should also be captured. Comprehensive provenance enables reliable auditing, validation, and engineer trust in the extracted data.
 
 \section{Formal Problem Definition}
-Let $q \in \mathcal{Q}$ denote a single template entry containing noisy text tokens.  
-The task is to compute a validated specification record  
+Let $q \in \mathcal{Q}$ represent a single entry from a quotation analysis template, typically a noisy, semi-structured text string.  
+The objective is to transform $q$ into a validated, structured specification record:
 \[
-\mathbf{s} = \bigl(\mathrm{MPN},\; \mathrm{Voltage_{max}},\; \mathrm{Current_{max}},\; \mathrm{TempRange},\dots\bigr)
-\]  
-such that:
+\mathbf{s} = \bigl(\mathrm{MPN},\; \mathrm{Voltage_{max}},\; \mathrm{Current_{max}},\; \mathrm{TempRange}, \ldots\bigr)
+\]
+such that the following criteria—each corresponding to a research question—are satisfied:
 
 \begin{enumerate}
-  \item \textbf{Correctness:} each numeric field equals the value printed in the authoritative datasheet.
-  \item \textbf{Completeness:} mandatory fields are present; optional fields are \texttt{null} if not in the document.  
-  \item \textbf{Provenance:} each field is traceable to its source, including its source, document name, page number.
-  \item \textbf{Latency:} average end-to-end processing time $<15$ s per template.  
+  \item \textbf{MPN Extraction (RQ1):} The Manufacturer Part Number is accurately identified from the noisy input.
+  \item \textbf{Datasheet Retrieval (RQ2):} The correct datasheet is reliably located and retrieved for the extracted MPN.
+  \item \textbf{Parameter Extraction (RQ3):} Key technical parameters (e.g., voltage, current, temperature range) are precisely extracted from the datasheet, matching the authoritative source.
+  \item \textbf{Provenance (RQ4):} For every extracted field, detailed provenance is recorded, including the data source (API or datasheet), document name or URL, and page number or location.
 \end{enumerate}
+
+Optional fields may be set to \texttt{null} if not present in the source.
 
 \section{Automation Requirements}
-Derived from the challenges and formal criteria, the target system must:
+To address the above problem and directly map to the research questions, the system must:
 
 \begin{enumerate}
-\item \textbf{R1: Noise-Tolerant Identifier Extraction} – Accurately extract MPNs from unstructured, noisy part designation strings, despite the presence of packaging codes, technical descriptors, or marketing language (addresses C1).
-
-\item \textbf{R2: No-Schema Parameter Discovery} – Support parameter extraction even in the absence of a structured identifier-to-parameter mapping, by relying on downstream datasheet parsing (addresses C2).
-
-\item \textbf{R3: Resilient Datasheet Retrieval} – Retrieve datasheets from a mix of trusted and unreliable sources, prioritizing success rate and content reliability while handling captchas, dead links, and inconsistent formats (addresses C3).
-
-\item \textbf{R4: Multi-Source Parameter Fusion} – Normalize and reconcile parameter values found across datasheets and distributor sites, resolving differences in naming, units, and precision to generate a coherent specification set (addresses C5).
-
-\item \textbf{R5: Structured Parameter Extraction} – Accurately extract parameter values from unstructured documents (PDFs), handling tables, prose, and visual elements using multi-modal models (addresses C4).
-
-\item \textbf{R6: End-to-End Traceability} – Track and store detailed provenance for each parameter, including source URL, document page, and bounding box, to support validation, auditing, and engineer trust (addresses C6).
+  \item \textbf{R1: Robust MPN Extraction (RQ1)} – Accurately extract Manufacturer Part Numbers from unstructured, noisy, and multilingual part designation fields.
+  \item \textbf{R2: Reliable Datasheet Retrieval (RQ2)} – Retrieve the correct datasheet for each MPN using a combination of distributor APIs and web search, maximising coverage and reliability.
+  \item \textbf{R3: Accurate Parameter Extraction (RQ3)} – Extract key technical parameters from datasheets using automated methods (e.g., vision-language models), handling diverse layouts and formats.
+  \item \textbf{R4: End-to-End Provenance (RQ4)} – For every extracted parameter, record detailed provenance information, including source type, document URL or identifier, and page or location, to ensure full traceability.
 \end{enumerate}
+
+These requirements are directly aligned with the research questions and address the main technical challenges in automating the extraction of structured data from industrial procurement documents.
 
 
 % mapping
@@ -95,13 +88,12 @@ Derived from the challenges and formal criteria, the target system must:
 \begin{center}
 \begin{tabular}{lll}
 \textbf{Challenge} & \textbf{Requirement} & \textbf{Mapped RQ} \\\hline
-C1 & R1 & RQ1  \\
-C4 & R5 & RQ2  \\
-C5 & R4 & RQ3  \\
-C6 & R6 & RQ4  \\
-\textit{(Cross-cutting)} & R6 & All RQs (system-level trade-offs) \\
+C1 & R1 & RQ1: MPN Extraction \\
+C4 & R3 & RQ3: Parameter Extraction \\
+C5 & R2, R3 & RQ2, RQ3: Datasheet Retrieval, Parameter Alignment \\
+C6 & R4 & RQ4: Provenance and Traceability \\
+\textit{(Cross-cutting)} & All & All RQs (system-level integration) \\
 \end{tabular}
 \end{center}
 
-
-This mapping clarifies how each experimental evaluation in later chapters directly addresses a pain point in industrial procurement workflows.
+This mapping clarifies how each technical challenge is addressed by a specific system requirement and evaluated through a corresponding research question in later chapters.
