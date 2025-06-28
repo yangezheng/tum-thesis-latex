@@ -1,18 +1,25 @@
 \chapter{Related Work}\label{chapter:relatedwork}
 
-
-This chapter surveys prior research relevant to the proposed multi-agent pipeline, grouped into four areas: (i) tool-using language-model agents, (ii) vision-language models for document understanding, (iii) multi-agent orchestration frameworks, and (iv) document-AI applications in procurement and engineering.
+This chapter surveys prior research relevant to the proposed multi-agent pipeline, grouped into four areas: (i) tool-using language-model agents, (ii) vision-language models for document understanding, (iii) multi-agent orchestration frameworks, and (iv) applications of document AI in procurement and engineering, with a particular focus on machine learning for price prediction.
 
 %--------------------------------------------------
 \section{Tool-Using Language-Model Agents}
-Large language models have been extended with \emph{tool use} capabilities to overcome context-length limits and provide up-to-date information.  
+Large language models (LLMs) have been extended with \emph{tool use} capabilities to overcome context-length limits and provide up-to-date information.  
 ReAct~\cite{yao2023react} interleaves chain-of-thought reasoning with executable actions, while the OpenAI function-calling interface popularised structured tool invocation in production systems.  
 LangChain\footnote{\url{https://www.langchain.com}} offers an open-source abstraction layer for wrapping external tools (APIs, SQL, web search) behind LLM calls.  
 AutoGPT and Voyager~\cite{wang2023voyager} push autonomy further but lack guarantees on reliability—highlighting the need for validation mechanisms such as those proposed in this thesis.
+
 \subsection{Origins of Tool Use in LLMs}
+Early efforts to augment language models with external tools arose from the need to overcome the inherent limitations of static model knowledge and fixed context windows. Initial approaches included calculator plugins, retrieval-augmented generation (RAG), and code execution modules, allowing LLMs to access up-to-date information, perform precise computations, or fetch facts beyond their training data. These developments laid the groundwork for more sophisticated agentic behaviours by demonstrating that LLMs could be made more useful and reliable when paired with external resources.
+
 \subsection{ReAct-style Reasoning + Acting}
+The ReAct framework~\cite{yao2023react} introduced a paradigm in which language models interleave chain-of-thought reasoning with tool invocation, enabling iterative planning, acting, and reflection. In this setup, the model generates both natural language rationales and explicit action commands (e.g., search, lookup, calculate), then observes the results and continues reasoning. This approach improves transparency and sample efficiency, and has inspired a range of agentic systems that combine LLM reasoning with external tool use for complex, multi-step tasks.
+
 \subsection{Structured Function-Calling Interfaces}
+The introduction of structured function-calling APIs—most notably by OpenAI—enabled LLMs to invoke tools via well-defined JSON schemas rather than free-form text. This shift improved reliability, composability, and safety in production systems, as models could now output arguments for specific functions (e.g., web search, database query, calculator) in a machine-readable format. Frameworks such as LangChain further abstracted tool integration, making it easier to wrap APIs, SQL engines, or web search behind LLM calls and orchestrate multi-step workflows.
+
 \subsection{Autonomous \& Memory-Augmented Agents}
+Recent advances such as AutoGPT and Voyager~\cite{wang2023voyager} have pushed toward greater autonomy by equipping LLM agents with persistent memory, self-reflection, and the ability to pursue open-ended goals over multiple steps. These agents can decompose tasks, store intermediate results, and adapt their strategies based on feedback. However, they often lack robust validation or reliability guarantees, which can lead to error propagation or hallucinated actions—highlighting the need for the validation and provenance mechanisms proposed in this thesis.
 
 %--------------------------------------------------
 \section{Vision–Language Models for Document Understanding}
@@ -63,21 +70,42 @@ prompt-engineered to output \emph{schema-validated JSON} containing technical pa
 This focus on reliability contrasts with prior VLM
 applications that prioritise free-form captioning or QA.
 
-
 %--------------------------------------------------
 \section{Multi-Agent Orchestration Frameworks}
-MetaGPT~\cite{hong2023metagpt} assigns specialised roles (product manager, engineer) to different LLM instances.  
-CrewAI\footnote{\url{https://github.com/joaomdmoura/crewAI}} and OpenAI's "Assistants" API provide abstractions for role-based coordination.  
-Most studies focus on qualitative demos; quantitative benchmarks on noisy industrial tasks, such as processing of quotation analysis templates, are scarce.  
-Our work contributes empirical results on orchestration efficacy (success) in a production-grade setting.
+Multi-agent orchestration frameworks enable the decomposition of complex tasks into specialised roles, each handled by a dedicated agent or LLM instance. This paradigm draws inspiration from human teams, where members assume distinct responsibilities and collaborate to achieve a shared objective. Recent advances have produced a variety of frameworks that facilitate agent communication, tool integration, and workflow management.
+
+\paragraph{MetaGPT}~\cite{hong2023metagpt} formalises the assignment of roles such as product manager, architect, and engineer to separate LLM agents, each with tailored prompts and objectives. Agents interact via structured messages, simulating a software development team. MetaGPT demonstrates improved task decomposition and code generation quality in software engineering scenarios.
+
+\paragraph{CrewAI}\footnote{\url{https://github.com/joaomdmoura/crewAI}} provides a lightweight Python framework for defining agent "crews" with explicit roles, memory, and tool access. CrewAI supports both synchronous and asynchronous agent execution, and allows for the orchestration of complex workflows such as document analysis, data extraction, and summarisation. Its modular design enables easy integration with external APIs and custom tools.
+
+\paragraph{OpenAI Assistants API} offers a managed environment for creating and coordinating multiple LLM-powered assistants, each with its own instructions, tools, and retrieval capabilities. The API abstracts away low-level orchestration details, making it accessible for rapid prototyping of multi-agent applications.
+
+Despite these advances, most published studies emphasise qualitative demonstrations—such as collaborative story writing or code review—rather than rigorous, quantitative evaluation on real-world, noisy industrial tasks. In particular, there is a lack of empirical benchmarks for multi-agent systems operating on semi-structured documents like quotation analysis templates, where robustness and accuracy are critical.
+
+Our work addresses this gap by providing quantitative results on multi-agent orchestration in a production-grade setting, specifically targeting the extraction and validation of technical parameters from supplier documents. We evaluate not only the correctness of individual agents, but also the reliability and efficiency of the overall workflow under realistic conditions.
 
 \subsection{AutoGen}
+AutoGen~\cite{wu2023autogen} is a generic multi-agent conversation framework that enables the creation of complex agent workflows through programmable agent definitions and message passing. Agents can be LLMs, humans, or tools, and can be composed into arbitrary topologies (e.g., chains, trees, or graphs). AutoGen supports advanced features such as self-reflection, tool invocation, and dynamic role assignment. It has been used for tasks ranging from code generation to data analysis, but published evaluations focus primarily on synthetic or well-structured tasks.
+
 \subsection{CrewAI}
-\subsection{Langgraph}
+CrewAI, as described above, is designed for rapid prototyping of multi-agent systems. It allows developers to define agent roles, assign tools, and specify communication protocols. CrewAI's memory and context management features enable agents to maintain state across multiple interactions, which is essential for tasks involving long documents or multi-step reasoning. While CrewAI has been demonstrated on document summarisation and extraction tasks, systematic evaluation on industrial-scale, noisy data remains limited.
+
+\subsection{LangGraph}
+LangGraph\footnote{\url{https://github.com/langchain-ai/langgraph}} is an open-source framework built on top of LangChain, specialising in graph-based orchestration of LLM agents and tools. LangGraph enables the construction of directed acyclic graphs (DAGs) where each node represents an agent or processing step, and edges define data flow and execution order. This approach facilitates modular, fault-tolerant pipelines that can be easily extended or reconfigured. LangGraph supports features such as stateful execution, error handling, and parallelism, making it well-suited for production environments. In our work, LangGraph is used to coordinate agents responsible for MPN extraction, datasheet retrieval, parameter parsing, and validation, ensuring robust and traceable processing of complex supplier documents.
+
+%--------------------------------------------------
+\section{Machine Learning for Price Prediction in Procurement}
+A key motivation for extracting structured technical data from supplier documents is to enable downstream applications such as automated price prediction. Machine learning models, particularly for tabular data, have been widely adopted in procurement and cost estimation to predict the unit price of electronic components and other industrial parts. These models leverage features such as voltage, current, power, temperature, package type, and supplier region—attributes that are often buried in unstructured datasheets or quotation templates.
+
+Traditional approaches relied on rule-based or statistical models, but recent work has demonstrated the effectiveness of supervised learning methods, including linear regression, gradient-boosted decision trees (e.g., XGBoost), and deep tabular models (e.g., TabNet), for price prediction tasks. The accuracy of these models depends critically on the quality and completeness of the input features, underscoring the importance of robust data extraction pipelines.
+
+By integrating multi-agent document understanding with machine learning–based cost modeling, it becomes possible to automate early-stage price estimation, support supplier negotiations, and drive data-driven procurement decisions. Our work builds on this literature by demonstrating an end-to-end pipeline that not only extracts technical parameters with high fidelity, but also feeds them into predictive models to quantify business value.
+
 %--------------------------------------------------
 \section{Research Gap}
 \begin{itemize}
-  \item VLMs demonstrate impressive captioning accuracy yet are rarely evaluated on fine-grained numeric specs inside technical PDFs.
-  \item No prior work jointly optimises extraction \emph{and} downstream business value (e.g.\ cost prediction) within an end-to-end industrial pipeline.
+  \item There is a lack of research evaluating the extraction of electronic Manufacturer Part Numbers (MPNs) from noisy procurement templates, despite the prevalence of such documents in industrial supply chains.
+  \item Vision-language models (VLMs) are rarely assessed on the extraction of fine-grained numeric specifications from technical PDFs, with most studies focusing on captioning or general document understanding.
+  \item No prior work jointly optimises both the extraction of technical parameters and the quantification of downstream business value (e.g., cost prediction) in a unified, end-to-end industrial pipeline.
 \end{itemize}
-These gaps motivate the multi-agent system and evaluation strategy proposed in the following chapters.
+Addressing these gaps, the following chapters propose and evaluate a multi-agent system designed for robust MPN extraction, technical parameter parsing, and business impact assessment in real-world procurement scenarios.
