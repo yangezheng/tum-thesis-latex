@@ -62,7 +62,7 @@ The agent then follows a structured workflow:
     \item \textbf{Send MPN to API Agent}: Forward the MPN to the API Retrieval Agent to obtain available specifications.
     \item \textbf{Check API Completeness}: Evaluate whether the API response contains all required specification fields.
     \item \textbf{Fallback to PDF Retrieval Agent if Needed}: If the API data is incomplete, route the request to the PDF Retrieval Agent for additional extraction from datasheets.
-    \item \textbf{Field Fusion (Aggregate and Return Results)}: Combine results from all sources and provide the final, validated output.
+    \item \textbf{Field Fusion}: Combine results from all sources and provide the final, validated output.
 \end{enumerate}
 
 This pronged approach ensures that the system first attempts the fastest and most structured data source (API), but can automatically fall back to more flexible, robust extraction from datasheets when necessary. By always normalising inputs and following this workflow, the Coordinator Agent enables consistent, reliable, and efficient data acquisition across a wide range of input types.

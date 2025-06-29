@@ -1,15 +1,6 @@
 \chapter{System Architecture}
 \label{chapter:architecture}
 
-% Usage Instructions
-% Insert this code in place of your current \section{System Architecture} placeholder.
-% 
-% Add \usepackage{tikz} and \usepackage{enumitem} if not already present.
-% 
-% Replace or augment the heuristic equation, table, or diagram details to match your final implementation.
-
-
-
 This chapter describes the overall design of the proposed multi-agent pipeline, the responsibilities of each agent, their communication strategy, and the supporting infrastructure for storage, logging, and fault-recovery.
 
 \section{High-Level Overview}
@@ -102,9 +93,8 @@ The validation module applies three layers of checks:
 \begin{enumerate}
   \item \textbf{JSON-Schema validation:} Ensures that all extracted fields have the correct types and units.
   \item \textbf{Physical range rules:} Verifies that values fall within plausible physical limits (e.g., $0 < V_{\max} < 1000\,\mathrm{V}$).
-  \item \textbf{Cross-source consistency:} Compares key technical parameters extracted from the datasheet with those returned by the Octopart API. If any value differs by more than 5\%, this discrepancy triggers a retry via the Web Retrieval Agent.
 \end{enumerate}
-If any check fails, a dashed feedback edge routes control back to the Web Retrieval Agent for another attempt.
+If any check fails, a dashed feedback edge routes control back to the \emph{Coordinator Agent} for another attempt.
 
 \paragraph{Cost Model Example}  
 A major downstream application enabled by the structured data pipeline is automated cost estimation. This is achieved by constructing a cost model that predicts the likely unit price of a component based on its technical attributes. The process can be broken down into the following steps:
@@ -192,15 +182,16 @@ Table~\ref{tab:reqmap} summarises how architectural components satisfy the autom
   \centering
   \caption{Requirements coverage by architectural component.}
   \label{tab:reqmap}
-  \begin{tabular}{ll}
+  \begin{tabular}{p{3.7cm} p{8.8cm}}
     \hline
-    Requirement & Fulfilled by \\\hline
-    R1 Robust MPN extraction & Planner Agent + MPN Extraction Tool (GPT-4o + regex) \\
-    R2 Adaptive retrieval    & API + Web Retrieval Agents, heuristic ranking, LangGraph dynamic routing \\
-    R3 Multi-modal parsing   & VLM Parsing Agent (GPT-4 Vision) \\
-    R4 Schema validation     & Validation Module (JSON Schema, range rules, retry/fallback logic) \\
-    R5 Traceability          & Provenance storage (state object accumulation: page, bbox, source URL) \\
-    R6 Scalability           & LangGraph concurrency, Redis memory, async Playwright, GPU offload \\\hline
+    \textbf{Requirement} & \textbf{Fulfilled by} \\\hline
+    R1 Robust MPN extraction & Coordinator Agent; MPN Extraction Tool (GPT-4o) \\
+    R2 Adaptive retrieval & API and PDF Retrieval Agents; heuristic ranking; LangGraph dynamic routing \\
+    R3 Multi-modal parsing & PDF Retrieval Agent; VLM Parsing (GPT-4 Vision) \\
+    R4 Schema validation & Validation Module (JSON Schema, range rules, retry/fallback logic) \\
+    R5 Traceability & Provenance storage (state object: page, bbox, source URL) \\
+    R6 Scalability & LangGraph concurrency; async Playwright \\
+    \hline
   \end{tabular}
 \end{table}
 
