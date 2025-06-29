@@ -32,7 +32,7 @@ By reasoning over free-form text and recognizing contextual cues, LLMs can ident
 %--------------------------------------------------
 \section{Research Objectives }
 The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy inputs from quotation analysis templates into validated, structured component specifications.  
-To operationalise this goal, the work addresses four research questions:
+To operationalise this goal, the work addresses three research questions:
 
 \begin{description}
 \item[\textbf{RQ1.}] How accurately can a language-model agent extract MPNs from noisy, multilingual part designation fields in semi-structured quotation analysis templates?
@@ -40,8 +40,6 @@ To operationalise this goal, the work addresses four research questions:
 \item[\textbf{RQ2.}] How reliably can web-search agents retrieve the correct PDF datasheet for a given part, especially when distributor APIs are incomplete or unavailable?
 
 \item[\textbf{RQ3.}] How accurately can technical parameters be extracted from retrieved datasheets using vision-language models or other automated methods?
-
-\item[\textbf{RQ4.}] How can provenance be captured and maintained at each stage to ensure full traceability of the extracted data?
 \end{description}
 
 %--------------------------------------------------
@@ -75,4 +73,4 @@ Chapter~\ref{chapter:problem} formalises the challenges inherent to quotation-te
 Chapter~\ref{chapter:architecture} details the proposed multi-agent architecture, while Chapter~\ref{chapter:implementation} describes implementation specifics, including prompts, API wrappers, and validation logic.  
 Chapter~\ref{chapter:evaluation} presents the experimental setup and quantitative results.  
 Chapter~\ref{chapter:costmodel} demonstrates the downstream cost-modelling application.  
-Chapter~\ref{chapter:discussion} reflects on limitations and industrial implications, and Chapterion~\ref{chapter:conclusion} concludes the thesis with avenues for future work.
+Chapter~\ref{chapter:discussion} reflects on limitations and industrial implications, and Chapter~\ref{chapter:conclusion} concludes the thesis with avenues for future work.
