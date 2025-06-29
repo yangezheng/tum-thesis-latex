@@ -1,6 +1,6 @@
 \chapter{Related Work}\label{chapter:relatedwork}
 
-This chapter surveys prior research relevant to the proposed multi-agent pipeline, grouped into four areas: (i) tool-using language-model agents, (ii) vision-language models for document understanding, (iii) multi-agent orchestration frameworks, and (iv) applications of document AI in procurement and engineering, with a particular focus on machine learning for price prediction.
+This chapter surveys prior research relevant to the proposed multi-agent pipeline, grouped into four areas: (i) tool-using language-model agents, (ii) PDF data-extraction techniques, (iii) multi-agent orchestration frameworks, and (iv) applications of procurement with technical parameters of electronic components, with a particular focus on machine learning for price prediction.
 
 %--------------------------------------------------
 \section{Tool-Using Language-Model Agents}
@@ -10,7 +10,7 @@ LangChain\footnote{\url{https://www.langchain.com}} offers an open-source abstra
 AutoGPT and Voyager~\cite{wang2023voyager} push autonomy further but lack guarantees on reliability—highlighting the need for validation mechanisms such as those proposed in this thesis.
 
 \subsection{Origins of Tool Use in LLMs}
-Early efforts to augment language models with external tools arose from the need to overcome the inherent limitations of static model knowledge and fixed context windows. Initial approaches included calculator plugins, retrieval-augmented generation (RAG), and code execution modules, allowing LLMs to access up-to-date information, perform precise computations, or fetch facts beyond their training data. These developments laid the groundwork for more sophisticated agentic behaviours by demonstrating that LLMs could be made more useful and reliable when paired with external resources.
+Early efforts to augment language models with external tools arose from the need to overcome the inherent limitations of static model knowledge and fixed context windows. Initial approaches included calculator plugins, retrieval-augmented generation (RAG) \cite{lewis_retrieval-augmented_2021}, and code execution modules, allowing LLMs to access up-to-date information, perform precise computations, or fetch facts beyond their training data. These developments laid the groundwork for more sophisticated agentic behaviours by demonstrating that LLMs could be made more useful and reliable when paired with external resources.
 
 \subsection{ReAct-style Reasoning + Acting}
 The ReAct framework~\cite{yao2023react} introduced a paradigm in which language models interleave chain-of-thought reasoning with tool invocation, enabling iterative planning, acting, and reflection. In this setup, the model generates both natural language rationales and explicit action commands (e.g., search, lookup, calculate), then observes the results and continues reasoning. This approach improves transparency and sample efficiency, and has inspired a range of agentic systems that combine LLM reasoning with external tool use for complex, multi-step tasks.
@@ -22,14 +22,16 @@ The introduction of structured function-calling APIs—most notably by OpenAI—
 Recent advances such as AutoGPT and Voyager~\cite{wang2023voyager} have pushed toward greater autonomy by equipping LLM agents with persistent memory, self-reflection, and the ability to pursue open-ended goals over multiple steps. These agents can decompose tasks, store intermediate results, and adapt their strategies based on feedback. However, they often lack robust validation or reliability guarantees, which can lead to error propagation or hallucinated actions—highlighting the need for the validation and provenance mechanisms proposed in this thesis.
 
 %--------------------------------------------------
-\section{Vision–Language Models for Document Understanding}
-Document–analysis research has evolved through three overlapping stages:  
-(1) \emph{rule- and library-based PDF parsing},  
-(2) \emph{layout-aware pre-trained transformers}, and  
-(3) \emph{large multimodal LLMs}.  
-We review each strand and position our work in the third.
+\section{PDF Data-Extraction Techniques}
+Document–analysis research has evolved through five overlapping paradigms:  
+(1) \emph{text-only parsing libraries},  
+(2) \emph{OCR + classic computer vision},  
+(3) \emph{template/rule-based enterprise systems},  
+(4) \emph{layout-aware pre-trained transformers}, and  
+(5) \emph{large vision--language models}.  
+We review each paradigm and highlight the limitations that motivate our approach.
 
-\subsection{Rule- and Library-Based PDF Parsing}
+\subsection{Text-Only Parsing Libraries}
 Early pipelines extracted text and tables using Python libraries such as
 \texttt{PDFMiner}, \texttt{PyPDF2}, \texttt{pdfplumber}, and
 \texttt{Camelot}/\texttt{Tabula}.%
@@ -49,7 +51,13 @@ While effective for homogeneous reports or invoices, such systems break on
 They also provide no learned representation of visual context, forcing every
 format change to be patched manually.
 
-\subsection{Layout-Aware Pre-training}
+\subsection{OCR + Classic Computer Vision}
+Document images or scanned PDFs that lack embedded text require \emph{image–based} pipelines. Pages are first rasterised and passed through optical character recognition (OCR) engines such as \texttt{Tesseract} or \texttt{EasyOCR}. Classical computer-vision heuristics—connected-component analysis, Hough line transforms, and morphological operations—then group words into lines, columns, and tables. Hybrid toolkits like LayoutParser~\cite{shen2021layoutparser} wrap Detectron2 detectors for layout elements and expose Python APIs for rule-based post-processing. While OCR-centric approaches successfully recover text from low-quality scans, they remain sensitive to resolution, skew, and noise, and provide limited semantic structure beyond bounding boxes.
+
+\subsection{Template/Rule-Based Enterprise Systems}
+Commercial "intelligent document processing" platforms—such as ABBYY FlexiCapture, Kofax Transformation, and Google Document AI's \emph{Procure-to-Pay} solution—let practitioners define extraction templates by drawing zones or specifying regular expressions. Rule-based engines deliver high precision for repetitive forms (invoices, tax statements) and support human-in-the-loop correction. However, every new supplier layout or minor format change demands manual template maintenance, creating scalability bottlenecks in heterogeneous procurement workflows.
+
+\subsection{Layout-Aware Pre-Trained Transformers}
 Transformer encoders that ingest token embeddings augmented with 2-D
 coordinates alleviate fragile heuristics.
 LayoutLMv3~\cite{xuhuang2022layoutlmv3} unifies text, layout, and image
@@ -59,7 +67,7 @@ These models excel on benchmarks such as FUNSD and RVL-CDIP, yet published
 studies seldom target engineering datasheets whose key attributes are numeric
 ranges buried in dense specification tables.
 
-\subsection{Large Multimodal LLMs}
+\subsection{Large Vision--Language Models}
 General-purpose Llama3, Gemini, and GPT-4 Vision—combine a frozen vision
 encoder with a large language model, enabling open-vocabulary reasoning across
 arbitrary documents.
@@ -100,6 +108,21 @@ A key motivation for extracting structured technical data from supplier document
 Traditional approaches relied on rule-based or statistical models, but recent work has demonstrated the effectiveness of supervised learning methods, including linear regression, gradient-boosted decision trees (e.g., XGBoost), and deep tabular models (e.g., TabNet), for price prediction tasks. The accuracy of these models depends critically on the quality and completeness of the input features, underscoring the importance of robust data extraction pipelines.
 
 By integrating multi-agent document understanding with machine learning–based cost modeling, it becomes possible to automate early-stage price estimation, support supplier negotiations, and drive data-driven procurement decisions. Our work builds on this literature by demonstrating an end-to-end pipeline that not only extracts technical parameters with high fidelity, but also feeds them into predictive models to quantify business value.
+
+\subsection{Classical Parametric and Statistical Models}
+Early cost–estimation research in manufacturing employed \emph{parametric} models that express unit price as a linear or polynomial function of explanatory variables such as material type, weight, and production volume. Multiple linear regression and analysis-of-variance (ANOVA) techniques remain popular in industry standards such as \emph{Should-Cost} analysis~\cite{ellram2013shouldcost}. Although interpretable, these models struggle with non-linear interactions and sparse categorical variables common in electronics procurement (e.g., package type × temperature rating).
+
+\subsection{Tree-Based Gradient Boosting}
+Ensemble methods such as XGBoost~\cite{chen2016xgboost}, LightGBM, and CatBoost dominate machine-learning competitions on tabular data thanks to their ability to capture non-linear feature interactions, handle missing values, and provide calibrated feature-importance scores. Li \emph{et al.}~\cite{li2020pcbe} showed that gradient-boosted trees predict printed-circuit-board (PCB) costs within 8\% mean absolute percentage error (MAPE), outperforming linear baselines by 35\%. Recent procurement case studies~\cite{lee2022procurementgbdt} report similar gains for semiconductor components.
+
+\subsection{Deep Neural Networks for Tabular Data}
+While transformers revolutionised NLP and CV, their success on purely tabular datasets is more recent. Models such as TabNet~\cite{arik2021tabnet}, FT-Transformer~\cite{gorishniy2021revisiting}, and SAINT~\cite{somepalli2021saint} employ attention mechanisms or sequential feature masking to learn hierarchical interactions without handcrafted features. On Huawei's \emph{BOM-Price} dataset, FT-Transformer reduces MAPE from 11.2\% (LightGBM) to 9.6\%~\cite{wang2023bomprice}. However, deep models require larger datasets and careful regularisation to avoid overfitting in high-cardinality supplier features.
+
+\subsection{Hybrid and Multi-Modal Approaches}
+Industrial cost prediction often benefits from combining structured BOM attributes with unstructured signals (datasheets, supplier news, macro-economic indices). Huang \emph{et al.}~\cite{huang2022multimodal} fuse numeric features with BERT embeddings of part descriptions, achieving a 12\% relative error reduction over tabular-only baselines. Joint modelling underscores the value of reliable text-to-structure extraction—the focus of our upstream agents.
+
+\subsection{Challenges and Open Problems}
+Despite progress, three challenges persist: (i) \textbf{data sparsity}—new MPNs appear faster than historical prices can be collected; (ii) \textbf{distribution shift} caused by supply-chain shocks (e.g., silicon shortages); and (iii) \textbf{feature incompleteness} when key electrical parameters are missing. Active-learning frameworks~\cite{settles2012active} and domain-adaptation techniques~\cite{wilson2020survey} have been proposed but lack validation on procurement benchmarks. Our pipeline tackles feature incompleteness by tightly coupling extraction confidence with model inference, enabling conditional retraining when uncertainty exceeds a cost-of-error threshold.
 
 %--------------------------------------------------
 \section{Research Gap}

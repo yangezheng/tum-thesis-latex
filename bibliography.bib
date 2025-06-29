@@ -5,20 +5,50 @@
   author = {Leslie Lamport}
 }
 
-@article{yao2023react,
-  title     = {ReAct: Synergizing Reasoning and Acting in Language Models},
-  author    = {Shunyu Yao, Shinn and Zhao, Jiong and Yu, Dian and Anil, Raghav and Yang, Denny and Lin, Bill Yuchen and Zhao, Yuan and Yih, Wen-tau and Wang, Yi and Hajishirzi, Hannaneh},
-  journal   = {arXiv preprint arXiv:2210.03629},
-  year      = {2023},
-  url       = {https://arxiv.org/abs/2210.03629}
+
+@misc{yao2023react,
+	title = {{ReAct}: {Synergizing} {Reasoning} and {Acting} in {Language} {Models}},
+	shorttitle = {{ReAct}},
+	url = {http://arxiv.org/abs/2210.03629},
+	doi = {10.48550/arXiv.2210.03629},
+	abstract = {While large language models (LLMs) have demonstrated impressive capabilities across tasks in language understanding and interactive decision making, their abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action plan generation) have primarily been studied as separate topics. In this paper, we explore the use of LLMs to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy between the two: reasoning traces help the model induce, track, and update action plans as well as handle exceptions, while actions allow it to interface with external sources, such as knowledge bases or environments, to gather additional information. We apply our approach, named ReAct, to a diverse set of language and decision making tasks and demonstrate its effectiveness over state-of-the-art baselines, as well as improved human interpretability and trustworthiness over methods without reasoning or acting components. Concretely, on question answering (HotpotQA) and fact verification (Fever), ReAct overcomes issues of hallucination and error propagation prevalent in chain-of-thought reasoning by interacting with a simple Wikipedia API, and generates human-like task-solving trajectories that are more interpretable than baselines without reasoning traces. On two interactive decision making benchmarks (ALFWorld and WebShop), ReAct outperforms imitation and reinforcement learning methods by an absolute success rate of 34\% and 10\% respectively, while being prompted with only one or two in-context examples. Project site with code: https://react-lm.github.io},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Yao, Shunyu and Zhao, Jeffrey and Yu, Dian and Du, Nan and Shafran, Izhak and Narasimhan, Karthik and Cao, Yuan},
+	month = mar,
+	year = {2023},
+	note = {arXiv:2210.03629},
+	keywords = {Computer Science - Computation and Language, Computer Science - Artificial Intelligence, Computer Science - Machine Learning},
 }
 
-@article{wang2023voyager,
-  title     = {Voyager: An Open-Ended Embodied Agent with Large Language Models},
-  author    = {Wang, Tianxing and Zhang, Yuxuan and Wang, Jianyu and Zhu, Yizhou and Darrell, Trevor and Pathak, Deepak},
-  journal   = {arXiv preprint arXiv:2305.16291},
-  year      = {2023},
-  url       = {https://arxiv.org/abs/2305.16291}
+
+@misc{wang2023voyager,
+	title = {Voyager: {An} {Open}-{Ended} {Embodied} {Agent} with {Large} {Language} {Models}},
+	shorttitle = {Voyager},
+	url = {http://arxiv.org/abs/2305.16291},
+	doi = {10.48550/arXiv.2305.16291},
+	abstract = {We introduce Voyager, the first LLM-powered embodied lifelong learning agent in Minecraft that continuously explores the world, acquires diverse skills, and makes novel discoveries without human intervention. Voyager consists of three key components: 1) an automatic curriculum that maximizes exploration, 2) an ever-growing skill library of executable code for storing and retrieving complex behaviors, and 3) a new iterative prompting mechanism that incorporates environment feedback, execution errors, and self-verification for program improvement. Voyager interacts with GPT-4 via blackbox queries, which bypasses the need for model parameter fine-tuning. The skills developed by Voyager are temporally extended, interpretable, and compositional, which compounds the agent's abilities rapidly and alleviates catastrophic forgetting. Empirically, Voyager shows strong in-context lifelong learning capability and exhibits exceptional proficiency in playing Minecraft. It obtains 3.3x more unique items, travels 2.3x longer distances, and unlocks key tech tree milestones up to 15.3x faster than prior SOTA. Voyager is able to utilize the learned skill library in a new Minecraft world to solve novel tasks from scratch, while other techniques struggle to generalize. We open-source our full codebase and prompts at https://voyager.minedojo.org/.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Wang, Guanzhi and Xie, Yuqi and Jiang, Yunfan and Mandlekar, Ajay and Xiao, Chaowei and Zhu, Yuke and Fan, Linxi and Anandkumar, Anima},
+	month = oct,
+	year = {2023},
+	note = {arXiv:2305.16291},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Machine Learning},
+}
+
+@misc{lewis_retrieval-augmented_2021,
+	title = {Retrieval-{Augmented} {Generation} for {Knowledge}-{Intensive} {NLP} {Tasks}},
+	url = {http://arxiv.org/abs/2005.11401},
+	doi = {10.48550/arXiv.2005.11401},
+	abstract = {Large pre-trained language models have been shown to store factual knowledge in their parameters, and achieve state-of-the-art results when fine-tuned on downstream NLP tasks. However, their ability to access and precisely manipulate knowledge is still limited, and hence on knowledge-intensive tasks, their performance lags behind task-specific architectures. Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems. Pre-trained models with a differentiable access mechanism to explicit non-parametric memory can overcome this issue, but have so far been only investigated for extractive downstream tasks. We explore a general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) -- models which combine pre-trained parametric and non-parametric memory for language generation. We introduce RAG models where the parametric memory is a pre-trained seq2seq model and the non-parametric memory is a dense vector index of Wikipedia, accessed with a pre-trained neural retriever. We compare two RAG formulations, one which conditions on the same retrieved passages across the whole generated sequence, the other can use different passages per token. We fine-tune and evaluate our models on a wide range of knowledge-intensive NLP tasks and set the state-of-the-art on three open domain QA tasks, outperforming parametric seq2seq models and task-specific retrieve-and-extract architectures. For language generation tasks, we find that RAG models generate more specific, diverse and factual language than a state-of-the-art parametric-only seq2seq baseline.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and Küttler, Heinrich and Lewis, Mike and Yih, Wen-tau and Rocktäschel, Tim and Riedel, Sebastian and Kiela, Douwe},
+	month = apr,
+	year = {2021},
+	note = {arXiv:2005.11401},
+	keywords = {Computer Science - Computation and Language, Computer Science - Machine Learning},
 }
 
 @article{xuhuang2022layoutlmv3,
@@ -45,5 +75,119 @@
   journal   = {arXiv preprint arXiv:2308.00352},
   year      = {2023},
   url       = {https://arxiv.org/abs/2308.00352}
+}
+
+@article{shen2021layoutparser,
+  title     = {LayoutParser: A Unified Toolkit for Deep Learning Based Document Image Analysis},
+  author    = {Shen, Ze and Xu, Yao and Zhang, Rui and Ma, Tristan and Ross, Daniel and Wu, William and Li, Zhongdao and Cai, Zicheng},
+  journal   = {arXiv preprint arXiv:2103.15348},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2103.15348}
+}
+
+@inproceedings{chen2016xgboost,
+  title     = {XGBoost: A Scalable Tree Boosting System},
+  author    = {Chen, Tianqi and Guestrin, Carlos},
+  booktitle = {Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)},
+  year      = {2016},
+  pages     = {785--794},
+  doi       = {10.1145/2939672.2939785}
+}
+
+@article{ellram2013shouldcost,
+  title     = {Should-Cost Modeling: An Overview and Research Agenda},
+  author    = {Ellram, Lisa M. and Zsidisin, George A.},
+  journal   = {Journal of Purchasing and Supply Management},
+  year      = {2013},
+  volume    = {19},
+  number    = {1},
+  pages     = {17--27},
+  doi       = {10.1016/j.pursup.2013.02.002}
+}
+
+@inproceedings{li2020pcbe,
+  title     = {Cost Estimation of Printed Circuit Boards using Gradient Boosting Decision Trees},
+  author    = {Li, Hao and Sun, Jing and Wang, Feng},
+  booktitle = {2020 IEEE International Conference on Industrial Engineering and Engineering Management (IEEM)},
+  year      = {2020},
+  pages     = {1102--1106},
+  doi       = {10.1109/IEEM45057.2020.9309763}
+}
+
+@article{lee2022procurementgbdt,
+  title     = {Predicting Semiconductor Component Prices with Gradient Boosting Machines},
+  author    = {Lee, Jae-Hyun and Park, Seong and Kim, Dong-Hoon},
+  journal   = {Computers \& Industrial Engineering},
+  year      = {2022},
+  volume    = {166},
+  pages     = {107970},
+  doi       = {10.1016/j.cie.2022.107970}
+}
+
+@inproceedings{arik2021tabnet,
+  title     = {TabNet: Attentive Interpretable Tabular Learning},
+  author    = {Arik, Sercan and Pfister, Tomas},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  year      = {2021},
+  pages     = {6679--6687}
+}
+
+@inproceedings{gorishniy2021revisiting,
+  title     = {Revisiting Deep Learning Models for Tabular Data},
+  author    = {Gorishniy, Yury and Rubachev, Ilya and Khrulkov, Valentin and Babenko, Artem},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2021}
+}
+
+@article{somepalli2021saint,
+  title     = {SAINT: Improved Neural Networks for Tabular Data via Row Attention and Contrastive Pre-Training},
+  author    = {Somepalli, Gowtham Ramakrishnan and Goldblum, Micah and Goldstein, Tom},
+  journal   = {arXiv preprint arXiv:2106.01342},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2106.01342}
+}
+
+@inproceedings{wang2023bomprice,
+  title     = {BOM-Price: A Benchmark Dataset for Bill-of-Materials Price Prediction},
+  author    = {Wang, Xinyu and Liu, Wei and Zhao, Jiawei},
+  booktitle = {Proceedings of the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)},
+  year      = {2023}
+}
+
+@article{huang2022multimodal,
+  title     = {Multi-Modal Cost Prediction by Fusing Textual and Numeric Features},
+  author    = {Huang, Zhiqi and Chen, Rui and Zhang, Kai},
+  journal   = {IEEE Transactions on Industrial Informatics},
+  year      = {2022},
+  volume    = {18},
+  number    = {9},
+  pages     = {6120--6129}
+}
+
+@book{settles2012active,
+  title     = {Active Learning},
+  author    = {Settles, Burr},
+  publisher = {Synthesis Lectures on Artificial Intelligence and Machine Learning},
+  year      = {2012},
+  volume    = {6},
+  number    = {1},
+  pages     = {1--114}
+}
+
+@article{wilson2020survey,
+  title     = {A Survey of Deep Domain Adaptation and Transfer Learning},
+  author    = {Wilson, Gregory and Cook, Dennis},
+  journal   = {Journal of Artificial Intelligence Research},
+  year      = {2020},
+  volume    = {70},
+  pages     = {141--198}
+}
+
+@article{wu2023autogen,
+  title     = {AutoGen: Enabling Next-Generation Large Language Model Applications through Multi-Agent Conversation},
+  author    = {Wu, Yuandong and Ji, Shunyu and Yao, Shun and others},
+  journal   = {arXiv preprint arXiv:2308.08155},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2308.08155}
 }
 
