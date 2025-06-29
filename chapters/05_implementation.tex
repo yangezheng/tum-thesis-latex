@@ -3,15 +3,15 @@
 
 %--------------------------------------------------
 \section{Technology Stack}
-The system is implemented in \textbf{Python~3.11} and leverages a concise set of robust open-source libraries:
+The system is implemented in \textbf{Python~3.11} and leverages a concise set of robust open-source libraries and cloud services:
 \begin{itemize}
   \item \textbf{LangGraph}~\footnote{v0.0.30 at time of writing} for graph-based agent orchestration and workflow management.
   \item \textbf{PyPDF2} and \textbf{pdfminer.six} for lightweight PDF metadata inspection.
-  \item \textbf{OpenAI Python SDK} for GPT-4 and GPT-4~Vision function calls.
+  \item \textbf{Azure OpenAI Python SDK} for GPT-4 and GPT-4~Vision function calls.
   \item \textbf{Playwright} to drive a headless Chromium browser for Google search and captcha-free PDF downloads.
-  \item \textbf{PostgreSQL~15} for durable storage of validated specification records and provenance.
+  \item \textbf{Azure PostgreSQL~15} for durable storage of validated specification records and provenance.
+  \item \textbf{scikit-learn} for training and evaluating both linear regression and random forest cost models.
 \end{itemize}
-GPU acceleration is optional but recommended for the VLM parsing step; the reference deployment uses an \texttt{NVIDIA~A10} with the \texttt{nvidia-container-toolkit} runtime.
 
 %--------------------------------------------------
 \section{Repository Layout}
@@ -53,20 +53,41 @@ multi_agent_data_enrichment/
 \section{Agent Implementations}
 This section details the concrete logic, prompts, and error-handling behaviour of each agent introduced in Chapter~\ref{chapter:architecture}.
 
-\subsection{MPN Extraction Agent}
-The agent exposes a single LangChain \texttt{Tool} with the JSON schema in Listing~\ref{lst:mpn_schema}.  A few-shot prompt (\emph{``Identify the most probable manufacturer part number …''}) primes GPT-4 with six diverse standardised quotation analysis template examples.  Post-processing removes common packaging suffixes (\texttt{-TR}, \texttt{-T/R}) and trims whitespace.  Regex validation assures an alphanumeric core of at least six characters.
+\subsection{Planner Agent}
+
+The Planner Agent serves as the entry point and orchestrator of the workflow. For each input line—whether a raw component description or a direct MPN—it first invokes the MPN Extraction Tool to standardise the input into a canonical MPN and associated categories. Once the MPN is extracted, the Planner Agent determines the appropriate downstream path, forwarding the result to either the API Retrieval Agent or the Web-Search Agent depending on the component type and data availability. This modular approach ensures that all inputs are processed consistently, enabling robust error handling and flexible routing throughout the pipeline.
+
+By always normalising inputs through the extraction tool, the system can seamlessly handle both free-text descriptions and explicit MPNs, streamlining the overall workflow.
+
+\subsection{MPN Extraction Tool}
+
+The MPN Extraction Tool is implemented as a LangChain tool, rather than a standalone agent. It wraps a language model call that takes a component description string and returns the manufacturer part number (MPN) and relevant categories in JSON format. The tool can be invoked by agents or planners within the workflow whenever standardisation or extraction of MPNs is required.
+
 \begin{figure}[H]
 \centering
 \begin{minipage}{0.9\textwidth}
 \begin{verbatim}
-{ "type": "object", "properties": {
-    "mpn": {"type": "string"}
-  }, "required": ["mpn"] }
+Input: "CAP 47nF 10% 50V 0603 X7R Purchased Part GCM188R71H473KA55D MURATA"
+Output: {"category_level_1": "passive-components", "category_level_2": "capacitors", "category_level_3": "ceramic-capacitors", "mpn": "GCM188R71H473KA55D"}
 \end{verbatim}
 \end{minipage}
-\caption{JSON schema emitted by the MPN Extraction Agent.}
+\caption{Example input and output for the MPN Extraction Tool, which is registered as a LangChain tool.}
 \label{lst:mpn_schema}
 \end{figure}
+
+\paragraph{Implementation Example: Extraction Tool}
+\begin{lstlisting}[language=Python]
+from langchain.tools import tool
+
+@tool
+def extract_mpn(description: str) -> dict:
+    """
+    Extracts the MPN and categories from a component description string.
+    """
+    # Call your language model here with the prompt and parse the JSON output
+    response = llm(f'Extract MPN and categories as JSON: "{description}"')
+    return json.loads(response)
+\end{lstlisting}
 
 \subsection{Retrieval Agents}
 \paragraph{Octopart API Wrapper}  Queries are rate-limited to ten requests per second via an async semaphore.  Responses are cached in Redis with a 24-hour TTL keyed by MPN.
@@ -89,41 +110,6 @@ If validation succeeds, the record is written to PostgreSQL and an OpenTelemetry
 %--------------------------------------------------
 \section{Orchestration and State Management}
 Agents are registered as LangChain tools and executed by an \texttt{LCEL} (LangChain Expression Language) graph shown in Figure~\ref{fig:lcel}.  Shared state is held in \texttt{RedisJSON} under the key \texttt{standardised-quotation-analysis-template:\textless{}id\textgreater{}}.  Updates are performed with optimistic locking to avoid lost writes when agents run in parallel.
-
-%--------------------------------------------------
-\section{Infrastructure and Deployment}
-A single \texttt{docker-compose.yml} file (Listing~\ref{lst:compose}) spins up the entire stack: \texttt{app} (FastAPI), \texttt{redis}, \texttt{postgres}, and an optional \texttt{grafana} + \texttt{prometheus} pair for metrics.
-\begin{figure}[H]
-\centering
-\begin{minipage}{0.9\textwidth}
-\begin{verbatim}
-version: "3.9"
-services:
-  app:
-    build: ..
-    env_file: .env
-    runtime: nvidia
-    depends_on: [redis, db]
-  redis:
-    image: redis:7-alpine
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_PASSWORD: secret
-\end{verbatim}
-\end{minipage}
-\caption{Excerpt of the Docker-Compose deployment.}
-\label{lst:compose}
-\end{figure}
-Continuous Integration (CI) runs \texttt{pytest} and \texttt{flake8} on every push; merges to \texttt{main} trigger an Azure Container Registry build and redeploy to a D8s~v5 VM via GitHub Actions.
-
-%--------------------------------------------------
-\section{Observability and Cost Tracking}
-OpenTelemetry interceptors export traces (latency, token consumption, retry counts) to Grafana Cloud.  A budgeting cron job queries the Postgres \texttt{cost\_log} table and sends Slack alerts when monthly spend exceeds 50\,\% of budgeted EUR~200.
-
-%--------------------------------------------------
-\section{Security and Compliance}\label{sec:security}
-All outbound traffic routes through BMW's corporate proxy; external domains are allow-listed.  API keys are mounted from \texttt{/mnt/secrets} using Azure Managed Identity.  The FastAPI service enforces OAuth~2.0 access tokens, and an SBOM is generated via Syft for each release to satisfy ISO~21434 traceability.
 
 %--------------------------------------------------
 \section{Summary}

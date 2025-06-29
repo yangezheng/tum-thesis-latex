@@ -36,7 +36,7 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
     \node[start] (start) {Start: MPN Input};
 
     % Planner
-    \node[planner, below=of start] (planner) {MPN Agent -- MPN Extraction};
+    \node[planner, below=of start] (planner) {Planner Agent -- MPN Extraction};
 
     % Two agents
     \node[agent, below left=1.5cm and 3.5cm of planner.south] (api) {Retrieval Agent -- API Access};
@@ -79,8 +79,8 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 
 \section{Agent Responsibilities}
 
-\paragraph{MPN Agent}  
-The MPN Agent receives a raw standardised quotation analysis template line and extracts the most likely Manufacturer Part Number (MPN) using GPT-3.5. Both zero-shot and few-shot prompting strategies were evaluated. The extracted MPN is then forwarded to the Retrieval Agent, which attempts to find the technical parameters of the component based on the provided MPN.
+\paragraph{Planner Agent}  
+The Planner Agent is the entry point of the workflow. For every incoming standardised quotation analysis template line, it invokes the \emph{MPN~Extraction} tool—an LLM function call that returns the most likely Manufacturer Part Number~(MPN) in JSON format. The extracted MPN is then forwarded to the Retrieval Agents for technical‐parameter lookup. By unconditionally routing all inputs through the same extraction step, the system eliminates heuristic shortcuts and ensures uniform preprocessing.
 
 
 \paragraph{Retrieval Agent (API)}  
@@ -198,7 +198,7 @@ Table~\ref{tab:reqmap} summarises how architectural components satisfy the autom
   \begin{tabular}{ll}
     \hline
     Requirement & Fulfilled by \\\hline
-    R1 Robust MPN extraction & MPN Extraction Agent (GPT-4o + regex) \\
+    R1 Robust MPN extraction & Planner Agent + MPN Extraction Tool (GPT-4o + regex) \\
     R2 Adaptive retrieval    & API + Web Retrieval Agents, heuristic ranking, LangGraph dynamic routing \\
     R3 Multi-modal parsing   & VLM Parsing Agent (GPT-4 Vision) \\
     R4 Schema validation     & Validation Module (JSON Schema, range rules, retry/fallback logic) \\
