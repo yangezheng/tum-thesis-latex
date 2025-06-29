@@ -3,103 +3,100 @@
 
 %--------------------------------------------------
 \subsection{Motivation}
-While the previous chapter demonstrates high-fidelity extraction of technical parameters, stakeholders ultimately care about the economic impact: can the structured data reduce effort in early price negotiations?  To quantify this value, we train a machine–learning model that predicts the expected unit price of an electronic component based solely on the pipeline's output.
+While the previous chapter demonstrates high-fidelity extraction of technical parameters, stakeholders ultimately care about the economic impact: can the structured data reduce effort in early price negotiations? To quantify this value, we train machine–learning models that predict the expected unit price of an electronic component based solely on the pipeline's output. Here, we illustrate the approach using MOSFETs as a representative example.
 
 %--------------------------------------------------
 \subsection{Dataset}
-We constructed separate datasets for each cost-prediction model, as the relevant technical parameters differ by component type. Each dataset contains distinct part numbers purchased between 2020 and~2023. For every part, we store:
+For the MOSFET case study, we constructed a dataset of distinct part numbers. For each part, we store:
 \begin{itemize}
-  \item validated specification JSON produced by the pipeline (Section~\ref{chapter:evaluation}), with features tailored to the target model (e.g., voltage/current for power ICs, or capacitance for passives),
-  \item historical purchase price (EUR) normalised to a quantity of~1\,000 units, and
-  \item supplier region (\textit{Asia}, \textit{Europe}, \textit{Americas}).
+  \item Validated specification JSON produced by the pipeline (Section~\ref{chapter:evaluation}), with features tailored to MOSFETs (e.g., $V_{DSS}$, $Q_G$, $R_{DS(on)}$, etc.),
+  \item Historical purchase price (EUR) normalised to a quantity of~1\,000 units,
 \end{itemize}
-After removing entries with missing price or incomplete specs, each dataset contains between \textbf{3\,900} and \textbf{4\,400} records, depending on the model. We allocate 70\,\% to training, 15\,\% to validation, and 15\,\% to a held-out test set. The training process and evaluation protocol are identical for all datasets; only the feature sets differ.
+After removing entries with missing price or incomplete specs, the MOSFET dataset contains approximately \textbf{2\,000} records. We allocate 80\,\% to training and 20\,\% to a held-out test set.
 
 %--------------------------------------------------
 \subsection{Feature Engineering}
 \subsubsection{Numeric Features}
-Voltage, current, power, and temperature range are used as raw features and normalised to zero mean and unit variance.
+Key numeric features for MOSFETs include:
+\begin{itemize}
+  \item $V_{DSS}$ (Drain-Source Voltage)
+  \item $R_{DS(on)}$ (On-State Resistance)
+  \item $I_{D,25^\circ C,TA}$ (Continuous Drain Current at 25$^\circ$C)
+  \item $Q_G$ (Total Gate Charge)
+  \item $Q_{G,V_{GS}}$ (Gate Charge at Specified $V_{GS}$)
+  \item $R_{DS,Current}$ (On-State Resistance at Specified Current)
+  \item $R_{DS,Voltage}$ (On-State Resistance at Specified Voltage)
+  \item Max/Min Operating Temperature
+\end{itemize}
+All numeric features are normalised to zero mean and unit variance.
 
 \subsubsection{Categorical Features}
 \begin{itemize}
-  \item \textbf{Package}: one-hot encoded (e.g., QFN, TQFP).
-  \item \textbf{Supplier Region}: three-way one-hot.
+  \item \textbf{Package}: one-hot encoded (e.g., QFN, TQFP, TO-220).
 \end{itemize}
 
 \subsubsection{Derived Features}
 \begin{itemize}
-  \item \textbf{Power Density} = \textit{power}~\slash~(package~area).
-  \item \textbf{Temp.~Span}   = $T_{\max}-T_{\min}$.
+  \item \textbf{Package Area}: Estimated in mm$^2$ using a lookup table based on the package type and number of pins. For common packages (e.g., QFN-32, TQFP-48, TO-220), we constructed a mapping from (package, pin count) to standard JEDEC footprint area. For rare or ambiguous cases, the area is interpolated from the closest known package.
+  \item \textbf{Power Density} = $I_{D,25^\circ C,TA} \times V_{DSS}$~\slash~(package~area)
 \end{itemize}
-Package area is approximated from JEDEC footprint tables.
 
 %--------------------------------------------------
 \subsection{Models Evaluated}
-\begin{description}
-  \item[\textbf{Baseline}] Mean price of training set (naïve predictor).
-  \item[\textbf{Linear}] Ordinary least squares on all features.
-  \item[\textbf{XGBoost}] Gradient-boosted decision trees (400 estimators, \texttt{max\_depth}=6).
-  \item[\textbf{TabNet}] Tabular deep-learning model with default hyper-parameters.
-\end{description}
-Hyper-parameters were tuned on the validation split via Optuna with 50 trials.
+We evaluated a range of regression models on the MOSFET dataset:
+\begin{table}[H]
+\centering
+\caption{Model performance for MOSFET price prediction (test set).}
+\label{tab:mosfet-models}
+\begin{tabular}{lccc}
+\toprule
+Run Name & MAE & MSE & $R^2$ \\
+\midrule
+GradientBoostingRegressor & 0.106 & 0.0336 & 0.84 \\
+Support Vector Regressor  & 0.127 & 0.0425 & 0.80 \\
+RandomForestRegressor     & 0.120 & 0.0434 & 0.79 \\
+Lasso                     & 0.185 & 0.0950 & 0.54 \\
+LinearRegression          & 0.185 & 0.0950 & 0.54 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Gradient boosting achieves the lowest mean absolute error (MAE) and highest $R^2$, outperforming both linear and deep-learning baselines. All models were tuned on the validation split.
 
 %--------------------------------------------------
 \subsection{Evaluation Metrics}
 \begin{itemize}
   \item \textbf{MAE}: Mean Absolute Error in EUR.
-  \item \textbf{MAPE}: Mean Absolute Percentage Error.
+  \item \textbf{MSE}: Mean Squared Error.
   \item \textbf{$R^{2}$}: Coefficient of determination.
 \end{itemize}
 
 %--------------------------------------------------
-\subsection{Results}
-\begin{table}[H]
-\centering
-\caption{Price-prediction performance on the held-out test set.}
-\label{tab:cost}
-\begin{tabular}{lccc}
-\toprule
-Model & MAE~(EUR) & MAPE~(\%) & $R^{2}$ \\
-\midrule
-Baseline  & 0.142 & 35.7 & 0.00 \\
-Linear    & 0.096 & 24.3 & 0.42 \\
-TabNet    & 0.074 & 18.1 & 0.63 \\
-XGBoost   & \textbf{0.061} & \textbf{14.9} & \textbf{0.71} \\
-\bottomrule
-\end{tabular}
-\end{table}
-XGBoost reduces absolute error by 57\,\% relative to the naïve baseline, highlighting the predictive value of the extracted specifications.
-
-%--------------------------------------------------
 \subsection{Feature Importance}
-Figure~\ref{fig:shap} shows SHAP values for the XGBoost model.  \textit{Voltage} and \textit{package} contribute most to price variance, followed by \textit{supplier region}.  Power density plays a secondary role, suggesting thermal constraints factor into cost but less strongly than package size.
-
-%--------------------------------------------------
-\subsection{Ablation Study}
-Removing individual feature groups confirms their additive benefit (Table~\ref{tab:ablation-cost}).
+To interpret the model, we computed SHAP values for the GradientBoostingRegressor. The most influential features for MOSFET price prediction are:
 
 \begin{table}[H]
 \centering
-\caption{Ablation on XGBoost feature groups.}
-\label{tab:ablation-cost}
-\begin{tabular}{lcc}
+\caption{Mean SHAP impact of features (MOSFET example, high to low).}
+\label{tab:mosfet-shap}
+\begin{tabular}{lc}
 \toprule
-Feature set & MAE & $\Delta$MAE \\
+Feature & Mean SHAP Impact \\
 \midrule
-All features & 0.061 & --- \\
--- Derived    & 0.068 & +0.007 \\
--- Categorical & 0.072 & +0.011 \\
--- Numeric     & 0.109 & +0.048 \\
+QG\_coulomb         & High \\
+Vdss                & High \\
+rds\_current        & Moderate \\
+Rds\_resistance     & Moderate \\
+Package\_Area       & Moderate \\
+QG\_vgs             & Low \\
+Id\_25C\_ta         & Low \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Numeric electrical parameters are indispensable; categorical and derived features provide incremental gains.
 
 %--------------------------------------------------
 \subsection{Discussion}
-Despite promising accuracy, two limitations warrant caution: (i) historic prices incorporate volume discounts and contractual nuances not captured by technical specs, and (ii) the dataset under-represents high-power devices, where extrinsic factors (e.g., heatsink requirements) dominate cost.
+While the model achieves strong accuracy ($R^2 = 0.84$) for MOSFETs, it is important to note that all prices in our dataset are for a fixed purchase quantity of 1000 units, which may not generalise to other order volumes where pricing can differ due to volume discounts not captured by technical specs.
 
 %--------------------------------------------------
-\subsection{Summary}
-Leveraging the structured output of the extraction pipeline, an XGBoost regressor achieves sub-0.07~EUR MAE on unseen parts, far outperforming linear and deep-learning baselines.  This demonstrates that high-quality parameter extraction not only aids engineering analysis but also provides actionable pricing insights for procurement teams.

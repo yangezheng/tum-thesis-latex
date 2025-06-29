@@ -97,4 +97,4 @@ Our pipeline delivers near-human accuracy on all five key parameters, with the l
 
 %--------------------------------------------------
 \section{Summary}
-The proposed pipeline outperforms regex, API-only, and PyPDF2 baselines in extraction accuracy and robustness, achieving near-human performance on parameter extraction. These results support the subsequent cost-prediction analysis in Section~\ref{chapter:costmodel}.
+The proposed pipeline consistently outperforms regex, API-only, and PyPDF2 baselines in both extraction accuracy and robustness, achieving near-human performance on key parameter fields. Furthermore, by leveraging the high-quality structured data produced by the pipeline, a gradient boosting regressor is able to predict MOSFET prices with strong accuracy ($R^2 = 0.84$) and low mean absolute error, demonstrating that the extracted specifications are not only accurate but also actionable for downstream cost modelling. These results highlight the pipeline's effectiveness in both data extraction and enabling reliable price prediction, supporting its value for procurement and engineering workflows.
