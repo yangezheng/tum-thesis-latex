@@ -36,7 +36,7 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
     \node[start] (start) {Start: MPN Input};
 
     % Planner
-    \node[planner, below=of start] (planner) {Planner Agent -- MPN Extraction};
+    \node[planner, below=of start] (planner) {Coordinator Agent -- MPN Extraction};
 
     % Two agents
     \node[agent, below left=1.5cm and 3.5cm of planner.south] (api) {Retrieval Agent -- API Access};
@@ -79,8 +79,8 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 
 \section{Agent Responsibilities}
 
-\paragraph{Planner Agent}  
-The Planner Agent is the entry point of the workflow. For every incoming standardised quotation analysis template line, it invokes the \emph{MPN~Extraction} tool—an LLM function call that returns the most likely Manufacturer Part Number~(MPN) in JSON format. The extracted MPN is then forwarded to the Retrieval Agents for technical‐parameter lookup. By unconditionally routing all inputs through the same extraction step, the system eliminates heuristic shortcuts and ensures uniform preprocessing.
+\paragraph{Coordinator Agent}  
+The Coordinator Agent is the entry point of the workflow. For every incoming standardised quotation analysis template line, it invokes the \emph{MPN~Extraction} tool—an LLM function call that returns the most likely Manufacturer Part Number~(MPN) in JSON format. The extracted MPN is then forwarded to the Retrieval Agents for technical‐parameter lookup. By unconditionally routing all inputs through the same extraction step, the system eliminates heuristic shortcuts and ensures uniform preprocessing.
 
 
 \paragraph{Retrieval Agent (API)}  
@@ -184,9 +184,6 @@ where $w_1, \ldots, w_4$ are tunable weights reflecting the importance of each c
 
 \section{Data Storage and Logging}
 After downloading each PDF, the file is uploaded to Azure Blob Storage. The Azure Blob link, together with its original source URL, is stored in a PostgreSQL database hosted on Azure. The validated specification fields are stored directly in dedicated columns of the PostgreSQL table (rather than as a JSON blob), along with the \verb|mpn|, provenance information, and the Azure Blob link and origin.
-
-\section{Fault Tolerance}
-If retrieval agents fail, the system records a \verb|status = "unresolved"| entry instead of leaving fields empty. This explicit logging ensures that failures are traceable and can be addressed through manual triage.
 
 \section{Mapping to Requirements}
 Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{chapter:problem}.

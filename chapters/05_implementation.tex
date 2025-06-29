@@ -20,29 +20,28 @@ Listing~\ref{lst:tree} shows the top-level directory structure.  Each agent and 
 \centering
 \begin{minipage}{0.9\textwidth}
 \begin{verbatim}
-multi_agent_data_enrichment/
-  cli.py
-  datasheet_download.log
-  datasheets/
+multi_agent_data_enrichment/         % Project root directory
+  cli.py                            % Command-line interface entry point
+  datasheets/                       % Example datasheet PDFs for testing
     LM324.pdf
     LM358.pdf
     LM456.pdf
-  debug_screenshots/
-  logs/
-  pyproject.toml
-  README.md
-  src/
-    multi_agent_data_enrichment/
+  debug_screenshots/                % Screenshots for debugging
+  logs/                             % Log files for runs and errors
+  pyproject.toml                    % Project metadata and dependencies
+  README.md                         % Project overview 
+  src/                              % Source code root
+    multi_agent_data_enrichment/    % Main package
       __init__.py
       graph/
-        component_graph.py
-      tools/
-        component_tools.py
-        datasheet_parse.py
-        downloader.py
-      visualization.py
-  token_usage_log.csv
-  uv.lock
+        component_graph.py          % Agent orchestration graph definition
+      tools/                        % Modular tools for agent use
+        mpn_extraction_tools.py     % MPN extraction logic
+        datasheet_parse.py          % PDF parsing utilities
+        datasheet_download.py       % Automated datasheet downloader
+        octopart_api_tools.py       % Octopart API integration
+  token_usage_log.csv               % Log of API token usage
+  uv.lock                           % Dependency lock file
 \end{verbatim}
 \end{minipage}
 \caption{Abbreviated repository tree of the multi\_agent\_data\_enrichment project.}
@@ -53,64 +52,135 @@ multi_agent_data_enrichment/
 \section{Agent Implementations}
 This section details the concrete logic, prompts, and error-handling behaviour of each agent introduced in Chapter~\ref{chapter:architecture}.
 
-\subsection{Planner Agent}
+\subsection{Coordinator Agent}
 
-The Planner Agent serves as the entry point and orchestrator of the workflow. For each input line—whether a raw component description or a direct MPN—it first invokes the MPN Extraction Tool to standardise the input into a canonical MPN and associated categories. Once the MPN is extracted, the Planner Agent determines the appropriate downstream path, forwarding the result to either the API Retrieval Agent or the Web-Search Agent depending on the component type and data availability. This modular approach ensures that all inputs are processed consistently, enabling robust error handling and flexible routing throughout the pipeline.
+The Coordinator Agent acts as the central orchestrator for component data acquisition. For each input—whether a free-text component description or a direct MPN—the Coordinator Agent first invokes the MPN Extraction Tool to standardise the input into a canonical MPN and associated categories. 
 
-By always normalising inputs through the extraction tool, the system can seamlessly handle both free-text descriptions and explicit MPNs, streamlining the overall workflow.
+The agent then follows a structured workflow:
+\begin{enumerate}
+    \item \textbf{Extract the MPN}: Use the extraction tool to obtain the MPN and categories.
+    \item \textbf{Send MPN to API Agent}: Forward the MPN to the API Retrieval Agent to obtain available specifications.
+    \item \textbf{Check API Completeness}: Evaluate whether the API response contains all required specification fields.
+    \item \textbf{Fallback to PDF Retrieval Agent if Needed}: If the API data is incomplete, route the request to the PDF Retrieval Agent for additional extraction from datasheets.
+    \item \textbf{Field Fusion (Aggregate and Return Results)}: Combine results from all sources and provide the final, validated output.
+\end{enumerate}
+
+This pronged approach ensures that the system first attempts the fastest and most structured data source (API), but can automatically fall back to more flexible, robust extraction from datasheets when necessary. By always normalising inputs and following this workflow, the Coordinator Agent enables consistent, reliable, and efficient data acquisition across a wide range of input types.
+
+The Coordinator Agent's system prompt is as follows:
+\begin{lstlisting}[caption={System prompt for the Coordinator Agent.}, label={lst:coordinator_prompt}, breaklines=true]
+You are a coordinator agent managing component data acquisition. Your workflow: 1) Extract the MPN, 2) Send MPN to API agent, 3) Check if API specs are complete, 4) If incomplete, route to datasheet agent for additional data, 5) Provide final results. Be clear and direct in your communications.
+\end{lstlisting}
 
 \subsection{MPN Extraction Tool}
 
 The MPN Extraction Tool is implemented as a LangChain tool, rather than a standalone agent. It wraps a language model call that takes a component description string and returns the manufacturer part number (MPN) and relevant categories in JSON format. The tool can be invoked by agents or planners within the workflow whenever standardisation or extraction of MPNs is required.
 
-\begin{figure}[H]
-\centering
-\begin{minipage}{0.9\textwidth}
-\begin{verbatim}
-Input: "CAP 47nF 10% 50V 0603 X7R Purchased Part GCM188R71H473KA55D MURATA"
-Output: {"category_level_1": "passive-components", "category_level_2": "capacitors", "category_level_3": "ceramic-capacitors", "mpn": "GCM188R71H473KA55D"}
-\end{verbatim}
-\end{minipage}
-\caption{Example input and output for the MPN Extraction Tool, which is registered as a LangChain tool.}
-\label{lst:mpn_schema}
-\end{figure}
+\begin{lstlisting}[caption={System prompt, user prompt, and output for the MPN Extraction Tool using the tagging prompt.}, label={lst:mpn_schema}, breaklines=true]
+System Prompt:
+Act as a technical assistant. Give an answer for given electronic component as JSON format. Always stick to the provided JSON format. If information is missing, give back "NaN". Just use the keys "category_level_1", "category_level_2", "category_level_3", "mpn", "tech_specs". Just provide the most signature tech_specs. It is for Searching with the Octopartv4 API. The tree structure is described here: {classification_structure_escaped}. Always stick to this structure"
 
-\paragraph{Implementation Example: Extraction Tool}
-\begin{lstlisting}[language=Python]
-from langchain.tools import tool
+Example 1:
+CAP 47nF 10% 50V 0603 X7R Purchased Part GCM188R71H473KA55D MURATA
 
-@tool
-def extract_mpn(description: str) -> dict:
-    """
-    Extracts the MPN and categories from a component description string.
-    """
-    # Call your language model here with the prompt and parse the JSON output
-    response = llm(f'Extract MPN and categories as JSON: "{description}"')
-    return json.loads(response)
+Output:
+{
+  "category_level_1": "passive-components",
+  "category_level_2": "capacitors",
+  "category_level_3": "ceramic-capacitors",
+  "mpn": "GCM188R71H473KA55D",
+}
 \end{lstlisting}
 
 \subsection{Retrieval Agents}
-\paragraph{Octopart API Wrapper}  Queries are rate-limited to ten requests per second via an async semaphore.  Responses are cached in Redis with a 24-hour TTL keyed by MPN.
 
-\paragraph{Web-Search Agent}  Playwright launches a \texttt{chromium} browser in non-headed, proxy-aware mode and executes the search string:\\
-\texttt{\{MPN\} datasheet filetype:pdf}.  Candidate URLs are scored by the heuristic in Equation~\ref{eq:heuristic}.  PDFs larger than 20~MB or smaller than 50~kB are discarded early to save tokens in the parsing step.
+The system employs two primary types of retrieval agents to acquire technical specifications for electronic components: the \textbf{API Retrieval Agent} and the \textbf{PDF Retrieval Agent}. Each is tailored to a different data source and extraction challenge.
 
-\subsection{Parsing Agent (GPT-4 Vision)}
-Each downloaded PDF is split into page images which are batched into groups of four to amortise API overhead.  The chain-of-thought prompt first asks GPT-4 V to produce a section outline before extracting the five target parameters (voltage, current, power, temperature, package).  The agent returns both the JSON fields and a list of (page, bbox) tuples for provenance.
+\paragraph{API Retrieval Agent}
+The API Retrieval Agent is implemented as a LangGraph agent and is responsible for fetching component specifications from structured API sources, such as Octopart and manufacturer-provided endpoints. To comply with rate limits and ensure reliable operation, the agent enforces a minimum interval of two seconds between requests. Its behaviour is governed by the following system prompt:
 
-\subsection{Validation Module}
-Validation combines three layers:
+\begin{lstlisting}[caption={System prompt for the Octopart API Agent.}, label={lst:octopart_api_prompt}, breaklines=true]
+You are an API agent specialized in getting component specifications from API sources. You have access to the get_specs() tool. When given an MPN, call get_specs(mpn) to retrieve available specifications from component databases and manufacturer APIs. Always call the tool - do not make up specifications.
+\end{lstlisting}
+
+The agent always invokes the \texttt{get\_specs()} tool with the provided MPN and never fabricates data. This ensures that all returned specifications are grounded in authoritative, up-to-date sources.
+
+\paragraph{PDF Retrieval Agent}
+When API sources are incomplete or unavailable, the PDF Retrieval Agent is used to extract technical data directly from component datasheets. This agent operates in two main phases: (1) acquiring the relevant PDF, and (2) extracting structured parameters from its contents.
+
+\textbf{System Prompt for the PDF Retrieval Agent:}
+\begin{lstlisting}[caption={System prompt for the PDF Retrieval Agent.}, label={lst:pdf_agent_prompt}, breaklines=true]
+You are a datasheet agent specialized in downloading and parsing component datasheets. You have access to get_datasheet() and parse_datasheet() tools. When given an MPN, you MUST call both tools in this exact sequence: 1. First call get_datasheet(mpn) to download the PDF 2. Then call parse_datasheet(filepath) using the filepath from step 1. Always call both tools in sequence - do not skip either step.
+\end{lstlisting}
+
+\textbf{System Prompt for Technical Parameter Extraction:}
+\begin{lstlisting}[caption={System prompt for extracting technical parameters from datasheet images.}, label={lst:pdf_extraction_prompt}, breaklines=true]
+You are an expert at analyzing electronic component datasheets. Extract the technical specifications as accurately as possible. If you can't find a specific parameter, respond with the appropriate null value:
+- For numeric fields (voltage, current, temperature, etc.): use null
+- For string fields: use 'N/A'
+- For yes/no fields: use 'N/A'
+- For integer fields: use null
+For all values, follow these conventions:
+- Voltage: numeric value in V (volts)
+- Current: numeric value in A (amperes)
+- Temperature: numeric value in degC
+- Tolerance/Accuracy: numeric value in %
+- Count (pins, channels, etc.): integer value only, no unit
+- Quiescent current, output current: numeric value in A (convert mA or uA to A)
+- Watchdog timer: return 'Yes' or 'No'
+Your response must be a valid JSON object according to the specified schema.
+\end{lstlisting}
+
+\textbf{1. PDF Acquisition:} The agent uses Playwright to launch a \texttt{chromium} browser in headless, proxy-aware mode. It performs a targeted web search with the query:
+\texttt{\{MPN\} datasheet filetype:pdf}
+to identify candidate datasheet URLs. These URLs are ranked using a custom heuristic (see Equation~\ref{eq:heuristic}) that prioritises likely datasheet sources. To avoid unnecessary processing, PDFs larger than 20~MB or smaller than 50~kB are filtered out, as they are likely to be irrelevant or lack sufficient content.
+
+\textbf{2. PDF Extraction Pipeline:}
+Extracting structured data from datasheets is challenging due to the diversity of layouts, fonts, and the prevalence of scanned or image-based documents. Traditional Python PDF libraries (\texttt{PyPDF2}, \texttt{pdfplumber}, \texttt{camelot}) were found to be unreliable for real-world datasheets, especially when dealing with complex tables or non-selectable text.
+
+To overcome these limitations, the PDF Retrieval Agent uses a vision-based pipeline:
 \begin{enumerate}
-  \item \textbf{JSON-Schema} checks ensure types and units.
-  \item \textbf{Physical range} rules (e.g., $0< V_{\max}<1000\,\mathrm{V}$).
-  \item \textbf{Cross-source consistency} compares datasheet values with Octopart metadata; discrepancies >5\,\% trigger a retry path to the Web-Search Agent.
+    \item \textbf{PDF Rendering:} Each page of the PDF is rendered as an image using \texttt{pdf2image} and \texttt{Pillow}. Up to 15 pages per document are processed, with images resized (e.g., to 1500~px width) and compressed to balance quality and token usage.
+    \item \textbf{Image Encoding:} The page images are base64-encoded for transmission to the language model API.
+    \item \textbf{Structured Extraction via VLM:} The encoded images are sent to a vision-language model (e.g., Azure OpenAI \texttt{gpt-4o}) in JSON mode, along with a strict schema specifying all required technical parameters (voltages, currents, temperatures, package type, pin count, etc.). The model is instructed to extract each parameter as accurately as possible, following the conventions and null value rules described in the system prompt above.
+    \item \textbf{Token and Performance Logging:} For each extraction, the agent logs token usage, processing time, and other metadata to a CSV file for observability and cost tracking.
+    \item \textbf{Output:} The result is a structured JSON object containing all extracted parameters, ready for downstream validation and storage.
 \end{enumerate}
-If validation succeeds, the record is written to PostgreSQL and an OpenTelemetry span is emitted.
+
+This vision-based approach has proven robust across a wide range of datasheet formats, including those with complex layouts or image-only content. By leveraging large vision-language models and enforcing a strict schema, the PDF Retrieval Agent enables reliable, automated extraction of detailed technical specifications that are often inaccessible to traditional PDF parsing tools.
+
+\subsection{Validation}
+Validation is implemented using \textbf{Pydantic} models, which provide type checking, unit normalization, and physical range constraints for all extracted parameters. All validation logic resides within the Pydantic model definitions and custom validators. For example, to ensure that $0 < V_{\max} < 1000\,\mathrm{V}$, a custom validator is defined within the model.
+
+\begin{lstlisting}[language=python, caption={Example Pydantic model with validation logic.}, label={lst:pydantic_validation}]
+from pydantic import BaseModel, validator, Field
+
+class ComponentSpecs(BaseModel):
+    voltage_max: float = Field(..., description="Maximum voltage in V")
+    current_max: float = Field(..., description="Maximum current in A")
+    temperature_max: float = Field(..., description="Maximum temperature in degC")
+
+    @validator('voltage_max')
+    def voltage_range(cls, v):
+        if not (0 < v < 1000):
+            raise ValueError('voltage_max must be between 0 and 1000 V')
+        return v
+\end{lstlisting}
+
+If validation fails (for example, if a value is out of range or the type is incorrect), Pydantic raises a \texttt{ValidationError}. This exception is caught by the agent's error handling logic and the invalid output is returned to the coordinator, which can then trigger reprocessing or other error handling steps, as described in Chapter~4. Only records that pass validation are written to \textbf{Azure PostgreSQL~15}.
 
 %--------------------------------------------------
 \section{Orchestration and State Management}
-Agents are registered as LangChain tools and executed by an \texttt{LCEL} (LangChain Expression Language) graph shown in Figure~\ref{fig:lcel}.  Shared state is held in \texttt{RedisJSON} under the key \texttt{standardised-quotation-analysis-template:\textless{}id\textgreater{}}.  Updates are performed with optimistic locking to avoid lost writes when agents run in parallel.
+
+The entire workflow is orchestrated with \textbf{LangGraph}, a light-weight, graph-based execution engine that treats every agent as a typed node in a directed graph.  Listing~\ref{lst:component_graph} shows a condensed excerpt of the Python definition; the real graph is functionally identical to the layered diagram in Chapter~\ref{chapter:architecture}.
+\begin{itemize}
+  \item \textbf{Nodes} \quad Each node wraps a single agent function (\emph{Coordinator Agent}, \emph{API Retrieval Agent}, \emph{PDF Retrieval Agent}, \emph{Validation}) and declares the portion of state it consumes and produces.
+  \item \textbf{Edges} \quad Edges represent both the normal flow of data and the conditional paths for retries or fallbacks when errors occur. For example, the \emph{Validation} node sets a \verb|validation_failed| flag to either \texttt{true} or \texttt{false}. If validation fails, LangGraph routes execution back to the \emph{Coordinator Agent} to regenerate or repair the data, as shown by the dashed feedback loop in Figure~\ref{fig:architecture}.
+\end{itemize}
+
+Compared with a hand-rolled \texttt{asyncio} scheduler or LangChain's LCEL, LangGraph offers two major advantages: (1) an explicit, version-controlled topology, and (2) first-class support for shared, structured state without the need for external message passing. These properties simplify debugging and make the pipeline easier to extend—for example, by adding a caching layer or a new fallback agent—without modifying existing nodes.
 
 %--------------------------------------------------
 \section{Summary}
+
 This chapter translated the high-level architecture into concrete implementation artefacts: Python modules, prompts, deployment scripts, and observability tooling.  The next chapter evaluates how well these design choices satisfy the performance and accuracy requirements defined earlier.
