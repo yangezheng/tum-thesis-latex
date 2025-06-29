@@ -1,12 +1,12 @@
-\chapter{Cost Model}
+\section{Cost Model}
 \label{chapter:costmodel}
 
 %--------------------------------------------------
-\section{Motivation}
+\subsection{Motivation}
 While the previous chapter demonstrates high-fidelity extraction of technical parameters, stakeholders ultimately care about the economic impact: can the structured data reduce effort in early price negotiations?  To quantify this value, we train a machine–learning model that predicts the expected unit price of an electronic component based solely on the pipeline's output.
 
 %--------------------------------------------------
-\section{Dataset}
+\subsection{Dataset}
 We constructed separate datasets for each cost-prediction model, as the relevant technical parameters differ by component type. Each dataset contains distinct part numbers purchased between 2020 and~2023. For every part, we store:
 \begin{itemize}
   \item validated specification JSON produced by the pipeline (Section~\ref{chapter:evaluation}), with features tailored to the target model (e.g., voltage/current for power ICs, or capacitance for passives),
@@ -16,17 +16,17 @@ We constructed separate datasets for each cost-prediction model, as the relevant
 After removing entries with missing price or incomplete specs, each dataset contains between \textbf{3\,900} and \textbf{4\,400} records, depending on the model. We allocate 70\,\% to training, 15\,\% to validation, and 15\,\% to a held-out test set. The training process and evaluation protocol are identical for all datasets; only the feature sets differ.
 
 %--------------------------------------------------
-\section{Feature Engineering}
-\subsection{Numeric Features}
+\subsection{Feature Engineering}
+\subsubsection{Numeric Features}
 Voltage, current, power, and temperature range are used as raw features and normalised to zero mean and unit variance.
 
-\subsection{Categorical Features}
+\subsubsection{Categorical Features}
 \begin{itemize}
   \item \textbf{Package}: one-hot encoded (e.g., QFN, TQFP).
   \item \textbf{Supplier Region}: three-way one-hot.
 \end{itemize}
 
-\subsection{Derived Features}
+\subsubsection{Derived Features}
 \begin{itemize}
   \item \textbf{Power Density} = \textit{power}~\slash~(package~area).
   \item \textbf{Temp.~Span}   = $T_{\max}-T_{\min}$.
@@ -34,7 +34,7 @@ Voltage, current, power, and temperature range are used as raw features and norm
 Package area is approximated from JEDEC footprint tables.
 
 %--------------------------------------------------
-\section{Models Evaluated}
+\subsection{Models Evaluated}
 \begin{description}
   \item[\textbf{Baseline}] Mean price of training set (naïve predictor).
   \item[\textbf{Linear}] Ordinary least squares on all features.
@@ -44,7 +44,7 @@ Package area is approximated from JEDEC footprint tables.
 Hyper-parameters were tuned on the validation split via Optuna with 50 trials.
 
 %--------------------------------------------------
-\section{Evaluation Metrics}
+\subsection{Evaluation Metrics}
 \begin{itemize}
   \item \textbf{MAE}: Mean Absolute Error in EUR.
   \item \textbf{MAPE}: Mean Absolute Percentage Error.
@@ -52,7 +52,7 @@ Hyper-parameters were tuned on the validation split via Optuna with 50 trials.
 \end{itemize}
 
 %--------------------------------------------------
-\section{Results}
+\subsection{Results}
 \begin{table}[H]
 \centering
 \caption{Price-prediction performance on the held-out test set.}
@@ -71,11 +71,11 @@ XGBoost   & \textbf{0.061} & \textbf{14.9} & \textbf{0.71} \\
 XGBoost reduces absolute error by 57\,\% relative to the naïve baseline, highlighting the predictive value of the extracted specifications.
 
 %--------------------------------------------------
-\section{Feature Importance}
+\subsection{Feature Importance}
 Figure~\ref{fig:shap} shows SHAP values for the XGBoost model.  \textit{Voltage} and \textit{package} contribute most to price variance, followed by \textit{supplier region}.  Power density plays a secondary role, suggesting thermal constraints factor into cost but less strongly than package size.
 
 %--------------------------------------------------
-\section{Ablation Study}
+\subsection{Ablation Study}
 Removing individual feature groups confirms their additive benefit (Table~\ref{tab:ablation-cost}).
 
 \begin{table}[H]
@@ -97,9 +97,9 @@ All features & 0.061 & --- \\
 Numeric electrical parameters are indispensable; categorical and derived features provide incremental gains.
 
 %--------------------------------------------------
-\section{Discussion}
+\subsection{Discussion}
 Despite promising accuracy, two limitations warrant caution: (i) historic prices incorporate volume discounts and contractual nuances not captured by technical specs, and (ii) the dataset under-represents high-power devices, where extrinsic factors (e.g., heatsink requirements) dominate cost.
 
 %--------------------------------------------------
-\section{Summary}
+\subsection{Summary}
 Leveraging the structured output of the extraction pipeline, an XGBoost regressor achieves sub-0.07~EUR MAE on unseen parts, far outperforming linear and deep-learning baselines.  This demonstrates that high-quality parameter extraction not only aids engineering analysis but also provides actionable pricing insights for procurement teams.
