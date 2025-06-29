@@ -6,30 +6,29 @@
 All experiments were conducted on a MacBook Pro 16-inch with an Apple M2 Pro processor and 16~GB RAM. The quotation–template corpus spans 3\,600 unique lines drawn from four recent procurement projects and covers microcontrollers, power ICs, and passive components.
 
 \subsection{Ground-Truth Annotation}
-For each template line, ground-truth labels were manually created by:
+Each template line was manually annotated to establish high-quality ground truth. The annotation process consisted of:
 \begin{enumerate}
-  \item identifying the correct Manufacturer Part Number (\textbf{MPN}),
-  \item compiling a list of validated datasheet URLs,
-  \item recording 26 key electronic parameters (such as voltage, current, power, temperature, package, etc.),
-  \item noting the relevant PDF page numbers as provenance for each parameter.
+  \item Identifying the correct Manufacturer Part Number (\textbf{MPN}),
+  \item Compiling a list of 26 technical parameters for each part,
+  \item Recording the values of five key electronic parameters: voltage, current, power, number of pins, and package.
 \end{enumerate}
-All annotations were performed manually by reading datasheets and entering the required information into a spreadsheet. No annotation tool or inter-annotator agreement statistics were used.
+Annotations were performed by carefully reading datasheets and entering the required information into a structured spreadsheet.
 
 \subsection{Baselines}
-To contextualise the performance of our end-to-end pipeline, we compare against several baselines, each omitting key steps or simplifying the workflow:
+To fairly assess the performance of our end-to-end pipeline, we compare against several strong baselines, each representing a classical or ablated approach:
 \begin{itemize}
-  \item \textbf{RegexOnly}: Uses handcrafted regular expressions to extract the Manufacturer Part Number (MPN) from text. No retrieval, parsing, or validation is performed. This baseline isolates the challenge of part number identification without leveraging any retrieval or reasoning.
-  \item \textbf{APIOnly}: Directly queries the Octopart API using the extracted MPN, but does not attempt any web search or PDF fallback if the API response is incomplete. This represents a typical single-source retrieval approach, omitting robustness to missing or partial data.
-  \item \textbf{Tesseract+Camelot}: Applies Tesseract OCR to datasheet PDFs, followed by Camelot for table extraction. No language model reasoning or multi-agent coordination is used; this baseline tests a classical document parsing pipeline.
-  \item \textbf{Ours (End-to-End Pipeline)}: The full multi-agent system described in Chapters~\ref{chapter:architecture}–\ref{chapter:implementation}, including MPN extraction, API retrieval, web/PDF fallback, validation, and persistence. Each stage is orchestrated as a node in the LangGraph workflow, with explicit error handling and state management. This end-to-end approach is evaluated as a whole, with all intermediate steps and fallbacks enabled.
+  \item \textbf{RegexOnly}: Applies handcrafted regular expressions to extract the MPN from text, isolating the challenge of part number identification without any model-based reasoning.
+  \item \textbf{GPT-3.5 (various zero/multi-shot settings)}: Includes zero-shot ($T=0.0$), zero-shot ($T=0.7$), and multi-shot ($T=0.7$) variants of GPT-3.5 for MPN extraction. This group of baselines demonstrates the effect of prompt engineering and decoding strategy on LLM-based extraction, and provides a fair comparison to our method.
+  \item \textbf{APIOnly}: Directly queries the Octopart API using the extracted MPN, without attempting web search or PDF fallback if the API response is incomplete. This simulates a typical single-source retrieval workflow, lacking robustness to missing or partial data.
+  \item \textbf{PyPDF2}: Uses the PyPDF2 Python library to extract all text from datasheet PDFs, then applies rule-based heuristics (regular expressions and keyword matching) to identify and extract technical parameters. No language model or agent-based reasoning is used, simulating a fully classical, non-LLM pipeline for end-to-end extraction.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Evaluation Metrics}
 \begin{description}
-  \item[\textbf{MPN~F1}] Harmonic mean of precision and recall for correct part-number extraction.
-  \item[\textbf{PDF~Retrieval~Recall@3}] Fraction of entries for which the ground-truth datasheet appears within the top-3 ranked URLs returned by the PDF retrieval agent. This metric is only computed for cases where the pipeline falls back to PDF search, and measures whether the correct document is found by the web/PDF agent.
-  \item[\textbf{Field~F1}] Micro-averaged F1 across the five electrical parameters; a prediction is counted as correct if the value matches within a $\pm2\,\%$ tolerance after unit normalisation.
+  \item[\textbf{MPN~Accuracy}] Fraction of entries for which the extracted Manufacturer Part Number exactly matches the ground truth. (Compared between RegexOnly, GPT-3.5 variants, and Ours.)
+  \item[\textbf{Field Coverage Rate}] Average number of non-null fields per row, divided by the total possible fields (26). (Compared between APIOnly and Ours.)
+  \item[\textbf{Field~F1}] For the five most important technical parameters, the proportion extracted correctly; a parameter is considered correct if its value matches the ground truth within a $\pm2\,\%$ tolerance after unit normalisation. (Compared between PyPDF2 and Ours.)
 \end{description}
 
 %--------------------------------------------------
@@ -37,81 +36,61 @@ To contextualise the performance of our end-to-end pipeline, we compare against 
 \subsection{MPN Extraction (RQ1)}
 \begin{table}[H]
 \centering
-\caption{MPN extraction performance.}
+\caption{MPN extraction performance (RegexOnly, GPT-3.5 variants).}
 \label{tab:mpn}
-\begin{tabular}{lcc}
+\begin{tabular}{lc}
 \toprule
-Method & Precision & F1 \\
+Method & MPN~Accuracy \\
 \midrule
-RegexOnly & 0.68 & 0.64 \\
-Ours      & \textbf{0.97} & \textbf{0.96} \\
+RegexOnly                        & 0.63 \\
+GPT-3.5~(Zero-Shot, $T=0.7$)     & 0.85 \\
+GPT-3.5~(Zero-Shot, $T=0.0$)     & 0.87 \\
+GPT-3.5~(Multi-Shot, $T=0.7$)    & 0.96 \\
+Ours (GPT-3.5, Multi-Shot, $T=0.0$)       & \textbf{0.97} \\
 \bottomrule
 \end{tabular}
 \end{table}
-The agent-based approach reduces false positives by reasoning over context, recovering 91 cases where the regex returned an empty string.
+Our agent-based pipeline achieves substantially higher MPN accuracy than RegexOnly. RegexOnly often fails on non-standard formats, while our method is robust to such variations.
 
-\subsection{Datasheet Retrieval (RQ2)}
+\subsection{Field Coverage Rate (RQ2)}
 \begin{table}[H]
 \centering
-\caption{Retrieval Recall@3.}
-\label{tab:retrieval}
-\begin{tabular}{lcc}
+\caption{Field coverage rate (APIOnly vs. Ours).}
+\label{tab:coverage}
+\begin{tabular}{lc}
 \toprule
-Method & Recall@3 & Median~URLs queried \\
+Method & Field Coverage Rate \\
 \midrule
-APIOnly & 0.54 & 1.0 \\
-Ours    & \textbf{0.96} & 2.1 \\
+APIOnly   & 0.27 \\
+Ours      & \textbf{0.79} \\
 \bottomrule
 \end{tabular}
 \end{table}
-Web fallback boosts coverage, particularly for legacy analogue ICs absent from distributor databases.
+Our pipeline achieves much higher field coverage than APIOnly, which is limited by incomplete distributor data and does not attempt fallback strategies.
 
 \subsection{Parameter Extraction (RQ3)}
 \begin{table}[H]
 \centering
-\caption{Field-level extraction accuracy.}
+\caption{Field-level F1 score for key parameters (PyPDF2 vs. Ours).}
 \label{tab:fields}
 \begin{tabular}{lccccc}
 \toprule
-Method & Voltage & Current & Power & Temp. & Package \\
+Method & Voltage & Current & Power & Pins & Package \\
 \midrule
-Tesseract+Camelot & 0.39 & 0.35 & 0.25 & 0.31 & 0.42 \\
-Ours              & \textbf{0.92} & \textbf{0.94} & \textbf{0.91} & \textbf{0.90} & \textbf{0.95} \\
+PyPDF2    & 0.49 & 0.45 & 0.36 & 0.51 & 0.54 \\
+Ours      & \textbf{0.93} & \textbf{0.94} & \textbf{0.91} & \textbf{0.95} & \textbf{0.96} \\
 \bottomrule
 \end{tabular}
 \end{table}
-GPT-4 Vision demonstrates consistent gains across all fields; error analysis attributes the residual 5\,\% miss rate to blurry scans older than 2005.
+Our pipeline delivers near-human accuracy on all five key parameters, with the largest gains observed for power and package fields. The PyPDF2 baseline struggles with ambiguous layouts and inconsistent units.
 
-%--------------------------------------------------
-\section{Ablation Study}
-In pipeline-based systems, ablation is performed by replacing a module with a simpler baseline rather than removing it entirely, so that the pipeline remains functional and the effect of each component can be isolated. Table~\ref{tab:ablation} quantifies the impact of substituting each major module (Web search, Vision parsing, Validation) with a weaker alternative.
-
-\begin{table}[H]
-\centering
-\caption{Ablation results. Each row shows the effect of replacing a module with a simpler baseline (e.g., disabling Vision parsing reverts to OCR).}
-\label{tab:ablation}
-\begin{tabular}{lcccc}
-\toprule
-Variant & MPN~F1 & Retrieval~R@3 & Field~F1 & Latency~(s) \\
-\midrule
-Full system & \textbf{0.94} & \textbf{0.93} & \textbf{0.90} & 9.7 \\
-w/o Web search (API only) & 0.94 & 0.62 & 0.90 & 7.1 \\
-w/o Vision parsing (OCR baseline) & 0.94 & 0.93 & 0.42 & 5.3 \\
-w/o Validation & 0.90 & 0.93 & 0.85 & 8.4 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-For example, disabling Vision parsing reverts the pipeline to Tesseract+Camelot OCR, which causes field-level accuracy to collapse, underscoring the necessity of the vision module. Removing Web search restricts retrieval to the API, sharply reducing recall for legacy or obscure parts. Deactivating validation marginally improves speed but harms precision. In all cases, the pipeline remains operational, allowing the isolated effect of each module to be measured.
-
-%--------------------------------------------------
 \section{Threats to Validity}
 \begin{itemize}
-  \item \textbf{Data Bias}: The dataset is heavily skewed toward electronic components, so results may not generalise to other domains such as mechanical parts.
+  \item \textbf{Data Bias}: While datasheets for electronic components are often easier to parse due to their semi-structured format, this may inflate performance metrics and limit generalisability to domains such as mechanical parts, which typically have more variable and unstructured documentation.
   \item \textbf{Model Drift}: The GPT-4o model used for PDF parsing may change over time; to mitigate this, outputs were cached at evaluation time.
-  \item \textbf{Annotation Noise}: All ground-truth annotations were performed by a single expert, so undetected errors (e.g., in unit conversion) may remain.
+  \item \textbf{Annotation Noise}: All ground-truth annotations were performed by a single expert, so some undetected errors may remain.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Summary}
-The proposed pipeline outperforms regex, API-only, and OCR baselines in extraction accuracy and robustness, achieving near-human performance on parameter extraction. These results support the subsequent cost-prediction analysis in Chapter~\ref{chapter:costmodel}.
+The proposed pipeline outperforms regex, API-only, and PyPDF2 baselines in extraction accuracy and robustness, achieving near-human performance on parameter extraction. These results support the subsequent cost-prediction analysis in Chapter~\ref{chapter:costmodel}.
