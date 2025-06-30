@@ -29,7 +29,7 @@ Document–analysis research has evolved through five overlapping paradigms:
 (3) \emph{template/rule-based enterprise systems},  
 (4) \emph{layout-aware pre-trained transformers}, and  
 (5) \emph{large vision--language models}.  
-We review each paradigm and highlight the limitations that motivate our approach.
+We review each paradigm and highlight the limitations that motivate my approach.
 
 \subsection{Text-Only Parsing Libraries}
 Early pipelines extracted text and tables using Python libraries such as
@@ -73,7 +73,7 @@ encoder with a large language model, enabling open-vocabulary reasoning across
 arbitrary documents.
 Although early demonstrations highlight science articles and receipts,
 rigorous evaluation on \emph{technical component datasheets} is scarce.
-Our work fills this gap: a GPT-4 Vision–based \textbf{Parsing Agent} is
+My work fills this gap: a GPT-4 Vision–based \textbf{Parsing Agent} is
 prompt-engineered to output \emph{schema-validated JSON} containing technical parameters.
 This focus on reliability contrasts with prior VLM
 applications that prioritise free-form captioning or QA.
@@ -90,7 +90,7 @@ Multi-agent orchestration frameworks enable the decomposition of complex tasks i
 
 Despite these advances, most published studies emphasise qualitative demonstrations—such as collaborative story writing or code review—rather than rigorous, quantitative evaluation on real-world, noisy industrial tasks. In particular, there is a lack of empirical benchmarks for multi-agent systems operating on semi-structured documents like Material Pricing Sheets, where robustness and accuracy are critical.
 
-Our work addresses this gap by providing quantitative results on multi-agent orchestration in a production-grade setting, specifically targeting the extraction and validation of technical parameters from supplier documents. We evaluate not only the correctness of individual agents, but also the reliability and efficiency of the overall workflow under realistic conditions.
+My work addresses this gap by providing quantitative results on multi-agent orchestration in a production-grade setting, specifically targeting the extraction and validation of technical parameters from supplier documents. We evaluate not only the correctness of individual agents, but also the reliability and efficiency of the overall workflow under realistic conditions.
 
 \subsection{AutoGen}
 AutoGen~\cite{wu2023autogen} is a generic multi-agent conversation framework that enables the creation of complex agent workflows through programmable agent definitions and message passing. Agents can be LLMs, humans, or tools, and can be composed into arbitrary topologies (e.g., chains, trees, or graphs). AutoGen supports advanced features such as self-reflection, tool invocation, and dynamic role assignment. It has been used for tasks ranging from code generation to data analysis, but published evaluations focus primarily on synthetic or well-structured tasks.
@@ -99,7 +99,7 @@ AutoGen~\cite{wu2023autogen} is a generic multi-agent conversation framework tha
 CrewAI, as described above, is designed for rapid prototyping of multi-agent systems. It allows developers to define agent roles, assign tools, and specify communication protocols. CrewAI's memory and context management features enable agents to maintain state across multiple interactions, which is essential for tasks involving long documents or multi-step reasoning. While CrewAI has been demonstrated on document summarisation and extraction tasks, systematic evaluation on industrial-scale, noisy data remains limited.
 
 \subsection{LangGraph}
-LangGraph\footnote{\url{https://github.com/langchain-ai/langgraph}} is an open-source framework built on top of LangChain, specialising in graph-based orchestration of LLM agents and tools. LangGraph enables the construction of directed acyclic graphs (DAGs) where each node represents an agent or processing step, and edges define data flow and execution order. This approach facilitates modular, fault-tolerant pipelines that can be easily extended or reconfigured. LangGraph supports features such as stateful execution, error handling, and parallelism, making it well-suited for production environments. In our work, LangGraph is used to coordinate agents responsible for component identifier extraction, datasheet retrieval, parameter parsing, and validation, ensuring robust and traceable processing of complex supplier documents.
+LangGraph\footnote{\url{https://github.com/langchain-ai/langgraph}} is an open-source framework built on top of LangChain, specialising in graph-based orchestration of LLM agents and tools. LangGraph enables the construction of directed acyclic graphs (DAGs) where each node represents an agent or processing step, and edges define data flow and execution order. This approach facilitates modular, fault-tolerant pipelines that can be easily extended or reconfigured. LangGraph supports features such as stateful execution, error handling, and parallelism, making it well-suited for production environments. In my work, LangGraph is used to coordinate agents responsible for component identifier extraction, datasheet retrieval, parameter parsing, and validation, ensuring robust and traceable processing of complex supplier documents.
 
 %--------------------------------------------------
 \section{Machine Learning for Price Prediction}

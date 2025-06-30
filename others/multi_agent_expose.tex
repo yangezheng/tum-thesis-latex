@@ -11,16 +11,16 @@
 \maketitle
 
 \section*{Motivation}
-In industrial procurement, engineers often work with \textbf{standardised quotation analysis templates} provided by suppliers—semi-structured documents containing part descriptions, electrical specifications, and inconsistent identifiers. While Manufacturer Part Numbers (MPNs) are typically present, they are often embedded in noisy text alongside other attributes, making reliable extraction and interpretation difficult. Automating the full pipeline—from standardised quotation analysis template to datasheet to validated component specifications—requires coordinating diverse tools: language models, web search, document parsing, and schema validation. Rigid scripts and monolithic workflows tend to break in the face of data variation or missing fields. This thesis addresses that gap by designing a \textbf{modular multi-agent system} where each agent specializes in one task (e.g., MPN extraction, datasheet retrieval, VLM parsing), enabling flexible, fault-tolerant, and interpretable orchestration across real-world data acquisition scenarios.
+In industrial procurement, engineers often work with \textbf{Material Pricing Sheets} provided by suppliers—semi-structured documents containing part descriptions, electrical specifications, and inconsistent identifiers. While Manufacturer Part Numbers (MPNs) are typically present, they are often embedded in noisy text alongside other attributes, making reliable extraction and interpretation difficult. Automating the full pipeline—from Material Pricing Sheet to datasheet to validated component specifications—requires coordinating diverse tools: language models, web search, document parsing, and schema validation. Rigid scripts and monolithic workflows tend to break in the face of data variation or missing fields. This thesis addresses that gap by designing a \textbf{modular multi-agent system} where each agent specializes in one task (e.g., MPN extraction, datasheet retrieval, VLM parsing), enabling flexible, fault-tolerant, and interpretable orchestration across real-world data acquisition scenarios.
 
 \section*{Objective}
-The objective of this thesis is to design, implement, and evaluate a modular multi-agent system that transforms semi-structured procurement inputs into validated, structured technical specifications. Each agent performs a specialized sub-task—from MPN extraction to datasheet retrieval, parsing, and validation—using LLMs, tool calls, and schema-based reasoning. The system is benchmarked on real standardised quotation analysis templates provided by BMW.
+The objective of this thesis is to design, implement, and evaluate a modular multi-agent system that transforms semi-structured procurement inputs into validated, structured technical specifications. Each agent performs a specialized sub-task—from MPN extraction to datasheet retrieval, parsing, and validation—using LLMs, tool calls, and schema-based reasoning. The system is benchmarked on real Material Pricing Sheets provided by BMW.
 
 
 \section*{Approach}
 The architecture consists of several specialized agents that cooperate to complete the pipeline:
 \begin{itemize}
-  \item \textbf{MPN Extraction Agent:} Uses an LLM to extract Manufacturer Part Numbers from noisy standardised quotation analysis template text.
+  \item \textbf{MPN Extraction Agent:} Uses an LLM to extract Manufacturer Part Numbers from noisy Material Pricing Sheet text.
   \item \textbf{Retrieval Agent (Web):} Searches for matching datasheets online (e.g., via Google) and  ranks results and data sources based on reliability.
   \item \textbf{Retrieval Agent (API):} Queries distributor APIs such as Octopart to retrieve structured component data or datasheet links, and integrates the results with other sources.
   \item \textbf{Parsing Agent:} Applies a vision-language model (e.g., GPT-4 Vision) to extract key fields such as voltage, power rating, and temperature from PDF datasheets.
@@ -33,7 +33,7 @@ The architecture consists of several specialized agents that cooperate to comple
 \begin{itemize}
   \item Implement a modular multi-agent system using function-calling and memory-sharing mechanisms
   \item Integrate distributor API agent (e.g., Octopart) for structured data retrieval
-  \item Evaluate MPN extraction accuracy using real standardised quotation analysis template examples from BMW
+  \item Evaluate MPN extraction accuracy using real Material Pricing Sheet examples from BMW
   \item Benchmark spec-level precision and recall on 50–100 manually verified datasheet samples
   \item Train and evaluate a regression model to predict component prices from extracted specifications
   \item Analyze system performance in terms of extraction success, latency, and failure types
@@ -66,7 +66,7 @@ The architecture consists of several specialized agents that cooperate to comple
 \textbf{Period (2025)} & \textbf{Milestones / Tasks} \\
 \hline
 Jan 6 – Jan 19     & Literature review, define goals and evaluation metrics \\
-Jan 20 – Feb 9     & Implement MPN extraction agent and benchmark on standardised quotation analysis templates \\
+Jan 20 – Feb 9     & Implement MPN extraction agent and benchmark on Material Pricing Sheets \\
 Feb 10 – Mar 2     & Build datasheet retrieval agents (API + web search) \\
 Mar 3 – Mar 23     & Integrate VLM-based parsing and JSON schema validation \\
 Mar 24 – Apr 6     & Create ground truth dataset for spec accuracy (50–100 samples) \\
@@ -89,7 +89,7 @@ Jun 23 – Jul 6     & Final revisions and defense preparation \\
   Overview of LLM agents, vision-language models, document AI, and industrial data extraction systems
 
   \item \textbf{Problem Setting} \\
-  Characteristics of standardised quotation analysis templates, challenges with semi-structured procurement data, and requirements for automation
+  Characteristics of Material Pricing Sheets, challenges with semi-structured procurement data, and requirements for automation
 
   \item \textbf{System Architecture} \\
   Design of the multi-agent framework, agent roles, tool integration, and coordination strategy
@@ -110,7 +110,7 @@ Jun 23 – Jul 6     & Final revisions and defense preparation \\
   Summary of findings and suggestions for extensions (e.g., feedback learning, human-in-the-loop validation)
 
   \item \textbf{Appendices} \\
-  Sample standardised quotation analysis template entries, annotated specs, evaluation logs, tool interfaces
+  Sample Material Pricing Sheet entries, annotated specs, evaluation logs, tool interfaces
 \end{enumerate}
 
 

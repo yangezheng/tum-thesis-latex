@@ -26,15 +26,15 @@ Submission Deadline: July 6, 2025}
 
 \subsection{Background and Industry Context}
 Global automotive manufacturers such as BMW rely on timely, accurate technical data when evaluating electronic components for new vehicle platforms.  
-A key artefact in this workflow is the \emph{standardised quotation analysis template}, a semi-structured document submitted by suppliers that mixes free-text part descriptions, tentative prices, package options, and—often inconsistently—Manufacturer Part Numbers~(MPNs).  
-Because standardised quotation analysis template layouts vary by supplier and project, automated ingestion has proved difficult; engineers still copy–paste identifiers, search the web for datasheets, and manually transcribe critical specifications into internal databases.  
+A key artefact in this workflow is the \emph{Material Pricing Sheet}, a semi-structured document submitted by suppliers that mixes free-text part descriptions, tentative prices, package options, and—often inconsistently—component identifiers.  
+Because Material Pricing Sheet layouts vary by supplier and project, automated ingestion has proved difficult; engineers still copy–paste identifiers, search the web for datasheets, and manually transcribe critical specifications into internal databases.  
 With thousands of parts assessed each month, the cumulative cost in engineer hours, delayed sourcing decisions, and downstream data errors is substantial.
 
 \subsection{Problem Statement}
 Current VBA and Python scripts at BMW handle isolated steps (e.\,g.\ basic web scraping) but fail when a field is missing, a datasheet URL changes, or the MPN is embedded inside noisy text.  
 Moreover, there is no unified mechanism to:  
 \begin{enumerate}
-  \item robustly extract a clean MPN from a free-text standardised quotation analysis template line,
+  \item robustly extract a clean MPN from a free-text Material Pricing Sheet line,
   \item select the best data source among distributor APIs and web search results,
   \item parse heterogeneous PDF datasheets into machine-readable form, and
   \item verify that every extracted value is plausible and provenance-linked.
@@ -42,11 +42,11 @@ Moreover, there is no unified mechanism to:
 The absence of such an end-to-end solution limits the scalability of data-driven cost estimation and component qualification.
 
 \subsection{Research Objectives and Questions}
-The overarching objective of this thesis is to design, implement, and evaluate a \emph{reliable multi-agent system} that converts noisy standardised quotation analysis template inputs into validated, structured component specifications.  
+The overarching objective of this thesis is to design, implement, and evaluate a \emph{reliable multi-agent system} that converts noisy Material Pricing Sheet inputs into validated, structured component specifications.  
 Concretely, the work addresses three research questions:
 
 \begin{description}
-  \item[RQ1:] How accurately can a language-model agent extract MPNs from semi-structured standardised quotation analysis template text?
+  \item[RQ1:] How accurately can a language-model agent extract MPNs from semi-structured Material Pricing Sheet text?
   \item[RQ2:] How can multiple retrieval agents (distributor API, web search) be orchestrated to maximise datasheet coverage and minimise latency?
   \item[RQ3:] What is the field-level precision and recall of a vision-language parsing agent, and how do validation rules affect overall data quality?
 \end{description}
@@ -56,14 +56,14 @@ The thesis makes four practical contributions:
 \begin{enumerate}
   \item A modular, fault-tolerant multi-agent architecture that coordinates language and vision models with external tools.
   \item An implementation that integrates GPT-4–based MPN extraction, Octopart API queries, Google search scraping, vision-language PDF parsing, and JSON-schema validation.
-  \item A benchmark on 1\,000 real BMW standardised quotation analysis template entries comprising metrics for MPN accuracy, datasheet retrieval success, and specification precision/recall.
+  \item A benchmark on 1\,000 real BMW Material Pricing Sheet entries comprising metrics for MPN accuracy, datasheet retrieval success, and specification precision/recall.
   \item A downstream regression model demonstrating that the extracted specifications improve component price prediction—highlighting direct business value.
 \end{enumerate}
 
 \subsection{Thesis Structure}
 The remainder of this document is organised as follows.  
 Section~\ref{sec:relatedwork} reviews language-model agents, vision-language models, and prior document-AI systems in procurement.  
-Section~\ref{sec:problem} formalises the data challenges inherent in standardised quotation analysis template processing.  
+Section~\ref{sec:problem} formalises the data challenges inherent in Material Pricing Sheet processing.  
 Section~\ref{sec:architecture} details the multi-agent design, while Section~\ref{sec:implementation} discusses implementation specifics such as prompt engineering and API integration.  
 Section~\ref{sec:evaluation} presents the experimental setup and results, and Section~\ref{sec:costmodel} evaluates the downstream cost-prediction model.  
 Section~\ref{sec:discussion} analyses limitations and industrial implications.  
@@ -80,7 +80,7 @@ Finally, Section~\ref{sec:conclusion} concludes the thesis and outlines future r
 
 \section{Problem Setting}
 \begin{itemize}
-  \item Characteristics of standardised quotation analysis templates
+  \item Characteristics of Material Pricing Sheets
   \item Challenges in MPN extraction and data heterogeneity
   \item Requirements for robustness, reliability, and validation
 \end{itemize}
@@ -104,7 +104,7 @@ Finally, Section~\ref{sec:conclusion} concludes the thesis and outlines future r
 
 \section{Evaluation}
 \begin{itemize}
-  \item Dataset: 1,000 real standardised quotation analysis templates, annotated spec samples (50--100)
+  \item Dataset: 1,000 real Material Pricing Sheets, annotated spec samples (50--100)
   \item Metrics: MPN accuracy, spec precision/recall, latency, task success
   \item Evaluation setup and agent benchmarking
   \item Failure analysis and qualitative examples
@@ -136,7 +136,7 @@ Finally, Section~\ref{sec:conclusion} concludes the thesis and outlines future r
 \appendix
 \section*{Appendices}
 \begin{itemize}
-  \item Example standardised quotation analysis template inputs and outputs
+  \item Example Material Pricing Sheet inputs and outputs
   \item Annotation schema for specs
   \item Prompt templates and API call examples
   \item Full experimental results and error logs

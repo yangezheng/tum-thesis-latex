@@ -15,23 +15,33 @@
 
 \section{Background }
 The digitalisation of automotive supply chains has accelerated in recent years, yet many data-critical workflows still depend on semi-structured documents and manual interpretation.  
-A common example in automotive supply chains is a \emph{Material Pricing Sheet}, a file exchanged during supplier negotiations that lists part designations, preliminary prices, delivery conditions, and essential technical details.  
-Although such templates frequently include an identifier resembling a component identifier, suppliers often embed the component identifier within longer descriptive strings—alongside electrical characteristics and ordering information—or omit it altogether.  
-As shown in Figure~\ref{fig:standardised-quotation-analysis-template-line-example}, lines in these templates typically appear as unstructured, single-line entries that conflate multiple attributes in free-form text.  
-Consequently, engineers must manually inspect each line, identify or correct the component identifier, locate the corresponding datasheet, and extract key specifications—such as maximum voltage or operating temperature—for input into internal cost and qualification systems.  
+A common example is the \emph{Material Pricing Sheet}, a file exchanged during supplier negotiations that lists part designations, preliminary prices, delivery conditions, and essential technical details.  
+While these templates often contain something resembling a component identifier, suppliers frequently embed the identifier within longer descriptive strings—mixing in electrical characteristics, packaging, and ordering information—or sometimes omit it altogether.  
+As illustrated in Figure~\ref{fig:standardised-quotation-analysis-template-line-example}, each line typically appears as a single, unstructured entry that combines multiple attributes in free-form text.  
+This lack of structure means engineers must manually inspect each line, identify or correct the component identifier, locate the corresponding datasheet, and extract key specifications—such as maximum voltage or operating temperature—for use in internal cost and qualification systems.  
 With several thousand parts assessed per program phase, this \emph{ad hoc} process consumes hundreds of engineer-hours and remains susceptible to transcription errors.
+
+The motivation for automating this process is clear: if we can reliably extract the component identifier from these noisy, unstructured lines, we can then retrieve authoritative technical parameters from datasheets or databases. Once structured technical data is available, it enables a wide range of downstream applications, such as automated price prediction, CO$_2$ emission estimation, and supplier risk analysis. In essence, accurate extraction and structuring of component information is a foundational step that unlocks advanced analytics and decision support, ultimately making procurement workflows more efficient, transparent, and scalable.
 
 %--------------------------------------------------
 \section{Problem Statement }
-Previous attempts to automate the processing of Material Pricing Sheets primarily relied on regular expressions to extract component identifiers from raw supplier text.  
-While effective in narrowly defined cases, these approaches were brittle---minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently caused extraction to fail.  
-A further limitation was ambiguity: when the regular expression returned a null result, it was unclear whether no component identifier was present or if the pattern simply failed to match a valid one.  
-To address these issues, large language models~(LLMs) offer a more robust alternative.  
-By reasoning over free-form text and recognizing contextual cues, LLMs can identify component identifiers even when they are embedded in descriptive strings or surrounded by supplier-specific notations.
+The overall challenge addressed in this thesis can be decomposed into three core technical problems:
+
+\begin{enumerate}
+    \item \textbf{Component Identifier Extraction:} Accurately extracting the component identifier from noisy and unstructured supplier text. Regular expressions are a common approach, but they are brittle—minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently cause extraction to fail. Furthermore, when a regular expression returns a null result, it is ambiguous whether no identifier is present or if the pattern simply failed to match a valid one.
+    \item \textbf{Technical Parameter Retrieval:} Obtaining the relevant technical parameters (such as voltage, current, or temperature range) for a given component identifier. This typically requires locating the correct datasheet or authoritative database entry and extracting the required specifications, which is complicated by inconsistent document formats and incomplete coverage in public databases.
+    \item \textbf{Downstream Application Construction:} Leveraging the structured technical data for downstream tasks, such as automated cost prediction, CO$_2$ estimation, or supplier risk analysis. These applications depend critically on the accuracy and completeness of the extracted and validated component information, but are not part of the system itself—they serve as motivating examples of what becomes possible once the data is structured.
+\end{enumerate}
+
+Addressing these problems requires a holistic approach that goes beyond simple pattern matching. For the first problem, large language models~(LLMs) offer a more robust alternative to regular expressions by reasoning over free-form text and recognizing contextual cues, enabling them to identify component identifiers even when embedded in descriptive strings or surrounded by supplier-specific notations.
+
+For the second problem, the system must reliably retrieve and extract technical parameters. This involves not only locating the correct datasheet or database entry, but also parsing diverse and inconsistently formatted documents—tasks that benefit from a combination of web search, API integration, and advanced extraction techniques such as vision-language models.
+
+While downstream applications are not part of the data enrichment pipeline system described in this thesis, a custom cost-prediction model was implemented solely as an illustrative example. The core focus remains on the first two problems: extracting component identifiers and retrieving technical parameters, which together establish the foundation for future analytics and automation use cases.
 
 %--------------------------------------------------
 \section{Research Objectives }
-The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy inputs from Material Pricing Sheets into validated, structured component specifications.  
+The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy inputs from Material Pricing Sheets into validated, structured component inforamtion.  
 To operationalise this goal, the work addresses three research questions:
 
 \begin{description}
@@ -58,11 +68,11 @@ To answer these questions, the thesis proposes a modular pipeline whose agents e
 
 %--------------------------------------------------
 \section{Contribution }
-The thesis offers four concrete contributions:
+The thesis offers three concrete contributions:
 \begin{enumerate}
   \item A fault-tolerant multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
   \item Empirical benchmarks reporting component identifier extraction accuracy, datasheet retrieval success, field-level precision/recall, and end-to-end latency.  
-  \item A downstream cost-prediction experiment showing that structured specs extracted by the system improve price-estimation accuracy, thus underlining direct business impact.
+  \item A downstream cost-prediction experiment showing that structured specs extracted by the system provide price-estimation, thus underlining direct business impact.
 \end{enumerate}
 
 %--------------------------------------------------

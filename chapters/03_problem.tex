@@ -11,12 +11,11 @@ Typical fields include:
   \item \textbf{Price and MOQ:} preliminary unit price, minimum order quantity,
 \end{itemize}
 
-The challenge lies in the Part Designation column, which often combines technical specifications and the component identifier into a single free-text field.
-This lack of structure, along with multilingual notations (e.g., Gehäuse'', Temp. Bereich''), complicates rule-based parsing.
+The challenge lies in the Part Designation column, which often merges technical specifications and the component identifier into a single free-text field. This lack of structure complicates rule-based parsing.
 
 \section{Core Challenges}
 \paragraph{C1: Inconsistent Identifier Extraction}  
-A component identifier may be surrounded by package codes (``\texttt{-TR}''), voltage values, or marketing text, making pattern-matching unreliable.  
+A component identifier may be surrounded by package information (e.g., ``\texttt{-Tape and Reel}''), voltage values, or marketing text, making pattern-matching unreliable.  
 Example:  
 \begin{center}
 \ttfamily PI3USB9281ZLE\_EX   20V Vbus Switch, TQFN-14, -40–85°C
