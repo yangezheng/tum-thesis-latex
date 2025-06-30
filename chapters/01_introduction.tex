@@ -4,38 +4,38 @@
 \begin{figure}[H]
   \centering
   \fbox{\begin{minipage}{0.95\textwidth}
-  \textbf{Example quotation template line (synthetic)}\\[0.5em]
+  \textbf{Example Material Pricing Sheet line (synthetic)}\\[0.5em]
   \texttt{
   10UF 25V X5R 0603 C1608X5R1E106K080AC RoHS Reel 4000pcs \$0.073
   }
   \end{minipage}}
-  \caption{Typical supplier-submitted quotation template line (synthetic example).}
+  \caption{Typical supplier-submitted Material Pricing Sheet line (synthetic example).}
   \label{fig:standardised-quotation-analysis-template-line-example}
 \end{figure}
 
 \section{Background }
 The digitalisation of automotive supply chains has accelerated in recent years, yet many data-critical workflows still depend on semi-structured documents and manual interpretation.  
-A common example in automotive supply chains is a \emph{standardised quotation analysis template}, a file exchanged during supplier negotiations that lists part designations, preliminary prices, delivery conditions, and essential technical details.  
-Although such templates frequently include an identifier resembling a Manufacturer Part Number~(MPN), suppliers often embed the MPN within longer descriptive strings—alongside electrical characteristics and ordering information—or omit it altogether.  
+A common example in automotive supply chains is a \emph{Material Pricing Sheet}, a file exchanged during supplier negotiations that lists part designations, preliminary prices, delivery conditions, and essential technical details.  
+Although such templates frequently include an identifier resembling a component identifier, suppliers often embed the component identifier within longer descriptive strings—alongside electrical characteristics and ordering information—or omit it altogether.  
 As shown in Figure~\ref{fig:standardised-quotation-analysis-template-line-example}, lines in these templates typically appear as unstructured, single-line entries that conflate multiple attributes in free-form text.  
-Consequently, engineers must manually inspect each line, identify or correct the MPN, locate the corresponding datasheet, and extract key specifications—such as maximum voltage or operating temperature—for input into internal cost and qualification systems.  
+Consequently, engineers must manually inspect each line, identify or correct the component identifier, locate the corresponding datasheet, and extract key specifications—such as maximum voltage or operating temperature—for input into internal cost and qualification systems.  
 With several thousand parts assessed per program phase, this \emph{ad hoc} process consumes hundreds of engineer-hours and remains susceptible to transcription errors.
 
 %--------------------------------------------------
 \section{Problem Statement }
-Previous attempts to automate the processing of quotation analysis templates primarily relied on regular expressions to extract Manufacturer Part Numbers~(MPNs) from raw supplier text.  
+Previous attempts to automate the processing of Material Pricing Sheets primarily relied on regular expressions to extract component identifiers from raw supplier text.  
 While effective in narrowly defined cases, these approaches were brittle---minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently caused extraction to fail.  
-A further limitation was ambiguity: when the regular expression returned a null result, it was unclear whether no MPN was present or if the pattern simply failed to match a valid one.  
+A further limitation was ambiguity: when the regular expression returned a null result, it was unclear whether no component identifier was present or if the pattern simply failed to match a valid one.  
 To address these issues, large language models~(LLMs) offer a more robust alternative.  
-By reasoning over free-form text and recognizing contextual cues, LLMs can identify MPNs even when they are embedded in descriptive strings or surrounded by supplier-specific notations.
+By reasoning over free-form text and recognizing contextual cues, LLMs can identify component identifiers even when they are embedded in descriptive strings or surrounded by supplier-specific notations.
 
 %--------------------------------------------------
 \section{Research Objectives }
-The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy inputs from quotation analysis templates into validated, structured component specifications.  
+The central objective of this thesis is to design, implement, and evaluate a \textbf{reliable multi-agent system} that transforms noisy inputs from Material Pricing Sheets into validated, structured component specifications.  
 To operationalise this goal, the work addresses three research questions:
 
 \begin{description}
-\item[\textbf{RQ1.}] How accurately can a language-model agent extract MPNs from noisy, multilingual part designation fields in semi-structured quotation analysis templates?
+\item[\textbf{RQ1.}] How accurately can a language-model agent extract component identifiers from noisy, multilingual part designation fields in semi-structured Material Pricing Sheets?
 
 \item[\textbf{RQ2.}] How reliably can web-search agents retrieve the correct PDF datasheet for a given part, especially when distributor APIs are incomplete or unavailable?
 
@@ -46,7 +46,7 @@ To operationalise this goal, the work addresses three research questions:
 \section{Proposed Approach }
 To answer these questions, the thesis proposes a modular pipeline whose agents each address a single sub-task:  
 \begin{enumerate}
-  \item An \textbf{MPN Extraction Agent} uses GPT-4 with prompt engineering and regex to isolate MPN from quotation template text.  
+  \item A \textbf{Component Identifier Extraction Agent} uses GPT-4 with prompt engineering and regex to isolate the component identifier from quotation template text.  
   \item Two \textbf{Retrieval Agents} operate in parallel:
     \begin{itemize}
       \item[(i)] An \emph{API Agent} queries the Octopart distributor API to obtain structured part metadata and datasheet links.
@@ -61,7 +61,7 @@ To answer these questions, the thesis proposes a modular pipeline whose agents e
 The thesis offers four concrete contributions:
 \begin{enumerate}
   \item A fault-tolerant multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
-  \item Empirical benchmarks reporting MPN extraction accuracy, datasheet retrieval success, field-level precision/recall, and end-to-end latency.  
+  \item Empirical benchmarks reporting component identifier extraction accuracy, datasheet retrieval success, field-level precision/recall, and end-to-end latency.  
   \item A downstream cost-prediction experiment showing that structured specs extracted by the system improve price-estimation accuracy, thus underlining direct business impact.
 \end{enumerate}
 
@@ -69,7 +69,7 @@ The thesis offers four concrete contributions:
 \section{Thesis Structure }
 The remainder of this document is organised as follows:  
 Chapter~\ref{chapter:relatedwork} surveys literature on language-model agents, vision-language models, and document AI in procurement.  
-Chapter~\ref{chapter:problem} formalises the challenges inherent to quotation-template processing.  
+Chapter~\ref{chapter:problem} formalises the challenges inherent to Material Pricing Sheet processing.  
 Chapter~\ref{chapter:architecture} details the proposed multi-agent architecture, while Chapter~\ref{chapter:implementation} describes implementation specifics, including prompts, API wrappers, and validation logic.  
 Chapter~\ref{chapter:evaluation} presents the experimental setup and quantitative results.  
 Section~\ref{chapter:costmodel} demonstrates the downstream cost-modelling application.  
