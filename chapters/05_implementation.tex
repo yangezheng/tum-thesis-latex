@@ -36,7 +36,7 @@ multi_agent_data_enrichment/         % Project root directory
       graph/
         component_graph.py          % Agent orchestration graph definition
       tools/                        % Modular tools for agent use
-        mpn_extraction_tools.py     % MPN extraction logic
+        mpn_extraction_tools.py     % component identifier extraction logic
         datasheet_parse.py          % PDF parsing utilities
         datasheet_download.py       % Automated datasheet downloader
         octopart_api_tools.py       % Octopart API integration
@@ -54,12 +54,12 @@ This section details the concrete logic, prompts, and error-handling behaviour o
 
 \subsection{Coordinator Agent}
 
-The Coordinator Agent acts as the central orchestrator for component data acquisition. For each input—whether a free-text component description or a direct MPN—the Coordinator Agent first invokes the MPN Extraction Tool to standardise the input into a canonical MPN and associated categories. 
+The Coordinator Agent acts as the central orchestrator for component data acquisition. For each input—whether a free-text component description or a direct component identifier—the Coordinator Agent first invokes the Component Identifier Extraction Tool to standardise the input into a canonical component identifier and associated categories. 
 
 The agent then follows a structured workflow:
 \begin{enumerate}
-    \item \textbf{Extract the MPN}: Use the extraction tool to obtain the MPN and categories.
-    \item \textbf{Send MPN to API Agent}: Forward the MPN to the API Retrieval Agent to obtain available specifications.
+    \item \textbf{Extract the component identifier}: Use the extraction tool to obtain the component identifier and categories.
+    \item \textbf{Send component identifier to API Agent}: Forward the component identifier to the API Retrieval Agent to obtain available specifications.
     \item \textbf{Check API Completeness}: Evaluate whether the API response contains all required specification fields.
     \item \textbf{Fallback to PDF Retrieval Agent if Needed}: If the API data is incomplete, route the request to the PDF Retrieval Agent for additional extraction from datasheets.
     \item \textbf{Field Fusion}: Combine results from all sources and provide the final, validated output.
@@ -69,16 +69,16 @@ This pronged approach ensures that the system first attempts the fastest and mos
 
 The Coordinator Agent's system prompt is as follows:
 \begin{lstlisting}[caption={System prompt for the Coordinator Agent.}, label={lst:coordinator_prompt}, breaklines=true]
-You are a coordinator agent managing component data acquisition. Your workflow: 1) Extract the MPN, 2) Send MPN to API agent, 3) Check if API specs are complete, 4) If incomplete, route to datasheet agent for additional data, 5) Provide final results. Be clear and direct in your communications.
+You are a coordinator agent managing component data acquisition. Your workflow: 1) Extract the component identifier, 2) Send component identifier to API agent, 3) Check if API specs are complete, 4) If incomplete, route to datasheet agent for additional data, 5) Provide final results. Be clear and direct in your communications.
 \end{lstlisting}
 
-\subsection{MPN Extraction Tool}
+\subsection{Component Identifier Extraction Tool}
 
-The MPN Extraction Tool is implemented as a LangChain tool, rather than a standalone agent. It wraps a language model call that takes a component description string and returns the manufacturer part number (MPN) and relevant categories in JSON format. The tool can be invoked by agents or planners within the workflow whenever standardisation or extraction of MPNs is required.
+The Component Identifier Extraction Tool is implemented as a LangChain tool, rather than a standalone agent. It wraps a language model call that takes a component description string and returns the component identifier and relevant categories in JSON format. The tool can be invoked by agents or planners within the workflow whenever standardisation or extraction of component identifiers is required.
 
-\begin{lstlisting}[caption={System prompt, user prompt, and output for the MPN Extraction Tool using the tagging prompt.}, label={lst:mpn_schema}, breaklines=true]
+\begin{lstlisting}[caption={System prompt, user prompt, and output for the Component Identifier Extraction Tool using the tagging prompt.}, label={lst:cid_schema}, breaklines=true]
 System Prompt:
-Act as a technical assistant. Give an answer for given electronic component as JSON format. Always stick to the provided JSON format. If information is missing, give back "NaN". Just use the keys "category_level_1", "category_level_2", "category_level_3", "mpn", "tech_specs". Just provide the most signature tech_specs. It is for Searching with the Octopartv4 API. The tree structure is described here: {classification_structure_escaped}. Always stick to this structure"
+Act as a technical assistant. Give an answer for a given electronic component as JSON format. Always stick to the provided JSON format. If information is missing, give back "NaN". Use the keys "category_level_1", "category_level_2", "category_level_3", "component_identifier", "tech_specs". Provide only the most signature tech_specs. It is for Searching with the Octopartv4 API. The tree structure is described here: {classification_structure_escaped}. Always stick to this structure"
 
 Example 1:
 CAP 47nF 10% 50V 0603 X7R Purchased Part GCM188R71H473KA55D MURATA
@@ -88,7 +88,7 @@ Output:
   "category_level_1": "passive-components",
   "category_level_2": "capacitors",
   "category_level_3": "ceramic-capacitors",
-  "mpn": "GCM188R71H473KA55D",
+  "component_identifier": "GCM188R71H473KA55D",
 }
 \end{lstlisting}
 
@@ -100,17 +100,17 @@ The system employs two primary types of retrieval agents to acquire technical sp
 The API Retrieval Agent is implemented as a LangGraph agent and is responsible for fetching component specifications from structured API sources, such as Octopart and manufacturer-provided endpoints. To comply with rate limits and ensure reliable operation, the agent enforces a minimum interval of two seconds between requests. Its behaviour is governed by the following system prompt:
 
 \begin{lstlisting}[caption={System prompt for the Octopart API Agent.}, label={lst:octopart_api_prompt}, breaklines=true]
-You are an API agent specialized in getting component specifications from API sources. You have access to the get_specs() tool. When given an MPN, call get_specs(mpn) to retrieve available specifications from component databases and manufacturer APIs. Always call the tool - do not make up specifications.
+You are an API agent specialized in getting component specifications from API sources. You have access to the get_specs() tool. When given a component identifier, call get_specs(mpn) to retrieve available specifications from component databases and manufacturer APIs. Always call the tool - do not make up specifications.
 \end{lstlisting}
 
-The agent always invokes the \texttt{get\_specs()} tool with the provided MPN and never fabricates data. This ensures that all returned specifications are grounded in authoritative, up-to-date sources.
+The agent always invokes the \texttt{get\_specs()} tool with the provided component identifier and never fabricates data. This ensures that all returned specifications are grounded in authoritative, up-to-date sources.
 
 \paragraph{PDF Retrieval Agent}
 When API sources are incomplete or unavailable, the PDF Retrieval Agent is used to extract technical data directly from component datasheets. This agent operates in two main phases: (1) acquiring the relevant PDF, and (2) extracting structured parameters from its contents.
 
 \textbf{System Prompt for the PDF Retrieval Agent:}
 \begin{lstlisting}[caption={System prompt for the PDF Retrieval Agent.}, label={lst:pdf_agent_prompt}, breaklines=true]
-You are a datasheet agent specialized in downloading and parsing component datasheets. You have access to get_datasheet() and parse_datasheet() tools. When given an MPN, you MUST call both tools in this exact sequence: 1. First call get_datasheet(mpn) to download the PDF 2. Then call parse_datasheet(filepath) using the filepath from step 1. Always call both tools in sequence - do not skip either step.
+You are a datasheet agent specialized in downloading and parsing component datasheets. You have access to get_datasheet() and parse_datasheet() tools. When given a component identifier, you MUST call both tools in this exact sequence: 1. First call get_datasheet(mpn) to download the PDF 2. Then call parse_datasheet(filepath) using the filepath from step 1. Always call both tools in sequence - do not skip either step.
 \end{lstlisting}
 
 \textbf{System Prompt for Technical Parameter Extraction:}
@@ -132,7 +132,7 @@ Your response must be a valid JSON object according to the specified schema.
 \end{lstlisting}
 
 \textbf{1. PDF Acquisition:} The agent uses Playwright to launch a \texttt{chromium} browser in headless, proxy-aware mode. It performs a targeted web search with the query:
-\texttt{\{MPN\} datasheet filetype:pdf}
+\texttt{\{component identifier\} datasheet filetype:pdf}
 to identify candidate datasheet URLs. These URLs are ranked using a custom heuristic (see Equation~\ref{eq:heuristic}) that prioritises likely datasheet sources. To avoid unnecessary processing, PDFs larger than 20~MB or smaller than 50~kB are filtered out, as they are likely to be irrelevant or lack sufficient content.
 
 \textbf{2. PDF Extraction Pipeline:}

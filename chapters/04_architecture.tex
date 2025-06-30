@@ -5,7 +5,7 @@ This chapter describes the overall design of the proposed multi-agent pipeline, 
 
 \section{High-Level Overview}
 
-Figure~\ref{fig:architecture} illustrates the data flow from a raw standardised quotation analysis template line to a validated specification record and a downstream cost prediction.  
+Figure~\ref{fig:architecture} illustrates the data flow from a raw Material Pricing Sheet line to a validated specification record and a downstream cost prediction.  
 Each rectangular node represents an autonomous agent implemented as a function-calling wrapper around a large language model (LLM) or vision-language model (VLM).  
 Solid arrows indicate the primary execution path, while dashed arrows represent feedback loops used for retries and validation.
 
@@ -24,10 +24,10 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
     cost/.style={rectangle, draw, minimum width=5cm, minimum height=1.1cm, align=center}
   ]
     % Top node
-    \node[start] (start) {Start: MPN Input};
+    \node[start] (start) {Start: Component Identifier Input};
 
     % Planner
-    \node[planner, below=of start] (planner) {Coordinator Agent -- MPN Extraction};
+    \node[planner, below=of start] (planner) {Coordinator Agent -- Component Identifier Extraction};
 
     % Two agents
     \node[agent, below left=1.5cm and 3.5cm of planner.south] (api) {Retrieval Agent -- API Access};
@@ -71,22 +71,22 @@ Solid arrows indicate the primary execution path, while dashed arrows represent 
 \section{Agent Responsibilities}
 
 \paragraph{Coordinator Agent}  
-The Coordinator Agent is the entry point of the workflow. For every incoming standardised quotation analysis template line, it invokes the \emph{MPN~Extraction} tool—an LLM function call that returns the most likely Manufacturer Part Number~(MPN) in JSON format. The extracted MPN is then forwarded to the Retrieval Agents for technical‐parameter lookup. By unconditionally routing all inputs through the same extraction step, the system eliminates heuristic shortcuts and ensures uniform preprocessing.
+The Coordinator Agent is the entry point of the workflow. For every incoming Material Pricing Sheet line, it invokes the \emph{Component~Identifier~Extraction} tool—an LLM function call that returns the most likely component identifier in JSON format. The extracted component identifier is then forwarded to the Retrieval Agents for technical‐parameter lookup. By unconditionally routing all inputs through the same extraction step, the system eliminates heuristic shortcuts and ensures uniform preprocessing.
 
 
 \paragraph{Retrieval Agent (API)}  
-Queries the Octopart REST API with the extracted MPN to directly obtain structured technical parameters for the component.  
+Queries the Octopart REST API with the extracted component identifier to directly obtain structured technical parameters for the component.  
 For each supported component category, the agent extracts the predefined set of technical fields from the API response and forwards them for schema resolution and validation.  
 No PDF retrieval or parsing is required in this path, making the process more efficient and reliable than PDF-based extraction.
 
 \paragraph{Retrieval Agent (PDF)}  
 When the API does not provide sufficient technical parameters, the system invokes the PDF Retrieval Agent. This agent uses Playwright to automate a Google search with the query  
-\texttt{\{MPN\} datasheet filetype:pdf}.  
+\texttt{\{component identifier\} datasheet filetype:pdf}.  
 Candidate PDF URLs are ranked using a reliability heuristic (see Equation~\ref{eq:heuristic}), prioritizing trusted sources and plausible datasheet characteristics. The top-ranked PDFs are downloaded for further analysis.  
 After downloading, the agent applies a vision language model (e.g., GPT-4 Vision) with a chain-of-thought prompt to parse the datasheet and extract the most likely technical parameters directly from the PDF content.
 
 \paragraph{Field Fusion}
-The field fusion module merges and reconciles outputs from multiple retrieval agents (API and PDF extraction) to produce a single, most likely set of technical parameters in a standardized format. It resolves conflicts and fills gaps by comparing agent outputs against the standardised quotation analysis template, ensuring the best possible data is selected for each field. The result is a JSON object containing the fused parameters, which is then passed to the validation module for further checks.
+The field fusion module merges and reconciles outputs from multiple retrieval agents (API and PDF extraction) to produce a single, most likely set of technical parameters in a standardized format. It resolves conflicts and fills gaps by comparing agent outputs against the Material Pricing Sheet, ensuring the best possible data is selected for each field. The result is a JSON object containing the fused parameters, which is then passed to the validation module for further checks.
 
 \paragraph{Validation Module}  
 The validation module applies three layers of checks:
@@ -144,7 +144,7 @@ Agent coordination is implemented using the LangGraph framework, which enables f
     \textbf{Aspect} & \textbf{Description} \\
     \hline
     Function-calling interface & Each agent exposes a JSON schema describing its function signature. GPT-4o selects and invokes the appropriate agent function at each node, using the schema to structure inputs and outputs. \\
-    Shared state & LangGraph maintains a mutable state object (e.g., \verb|mpn|, \verb|pdf_path|, validation flags, extracted parameters) that is passed between nodes. All agents can read and update this state, enabling seamless context sharing and coordination without external storage. \\
+    Shared state & LangGraph maintains a mutable state object (e.g., \verb|component_identifier|, \verb|pdf_path|, validation flags, extracted parameters) that is passed between nodes. All agents can read and update this state, enabling seamless context sharing and coordination without external storage. \\
     Retry and fallback logic & The workflow graph encodes retry and fallback behavior: nodes can handle exceptions, apply exponential backoff (e.g., 1\,s, 2\,s, 4\,s), and reroute control to fallback agents or alternative paths if a step fails repeatedly (typically after 3 attempts). \\
     Memory and provenance & The state object accumulates intermediate results and provenance information (such as source URLs, page numbers, or bounding boxes), supporting traceability and robust downstream processing. \\
     Dynamic routing & The graph structure allows for conditional branching and dynamic rerouting based on agent outputs or validation results, ensuring resilient and adaptive execution. \\
@@ -161,7 +161,7 @@ When ranking candidate PDF URLs for datasheet retrieval, the system evaluates ea
     \item \textbf{Direct PDF Link:} URLs ending with \texttt{.pdf} are favored (score 0), while indirect or non-PDF links are penalized (score 1).
     \item \textbf{Historical Failure Rate:} An exponentially decayed average of previous download failures from the same host, to deprioritize unreliable sources.
     \item \textbf{PDF Size and Number of Pages:} The system first checks if the file size and page count are within acceptable ranges (e.g., 50\,kB--20\,MB and 1--20 pages). If so, the PDF is downloaded and checked individually; otherwise, the candidate is skipped.
-    \item \textbf{Keyword Presence:} After downloading, the PDF (or its metadata) is scanned for key terms such as ``specification,'' ``datasheet,'' or the target MPN, which can boost the score for matches.
+    \item \textbf{Keyword Presence:} After downloading, the PDF (or its metadata) is scanned for key terms such as ``specification,'' ``datasheet,'' or the target component identifier, which can boost the score for matches.
 \end{itemize}
 The overall cost is computed as a weighted sum of these features:
 \begin{equation}
@@ -173,7 +173,7 @@ $}
 where $w_1, \ldots, w_4$ are tunable weights reflecting the importance of each criterion. Lower cost scores indicate higher-priority candidates for download and parsing.
 
 \section{Data Storage and Logging}
-After downloading each PDF, the file is uploaded to Azure Blob Storage. The Azure Blob link, together with its original source URL, is stored in a PostgreSQL database hosted on Azure. The validated specification fields are stored directly in dedicated columns of the PostgreSQL table (rather than as a JSON blob), along with the \verb|mpn|, provenance information, and the Azure Blob link and origin.
+After downloading each PDF, the file is uploaded to Azure Blob Storage. The Azure Blob link, together with its original source URL, is stored in a PostgreSQL database hosted on Azure. The validated specification fields are stored directly in dedicated columns of the PostgreSQL table (rather than as a JSON blob), along with the \verb|component_identifier|, provenance information, and the Azure Blob link and origin.
 
 \section{Mapping to Requirements}
 Table~\ref{tab:reqmap} summarises how architectural components satisfy the automation requirements defined in Chapter~\ref{chapter:problem}.
@@ -185,7 +185,7 @@ Table~\ref{tab:reqmap} summarises how architectural components satisfy the autom
   \begin{tabular}{p{3.7cm} p{8.8cm}}
     \hline
     \textbf{Requirement} & \textbf{Fulfilled by} \\\hline
-    R1 Robust MPN extraction & Coordinator Agent; MPN Extraction Tool (GPT-4o) \\
+    R1 Robust component identifier extraction & Coordinator Agent; Component Identifier Extraction Tool (GPT-4o) \\
     R2 Adaptive retrieval & API and PDF Retrieval Agents; heuristic ranking; LangGraph dynamic routing \\
     R3 Multi-modal parsing & PDF Retrieval Agent; VLM Parsing (GPT-4 Vision) \\
     R4 Schema validation & Validation Module (JSON Schema, range rules, retry/fallback logic) \\

@@ -8,7 +8,7 @@ All experiments were conducted on a MacBook Pro 16-inch with an Apple M2 Pro pro
 \subsection{Ground-Truth Annotation}
 Each template line was manually annotated to establish high-quality ground truth. The annotation process consisted of:
 \begin{enumerate}
-  \item Identifying the correct Manufacturer Part Number (\textbf{MPN}),
+  \item Identifying the correct component identifier,
   \item Compiling a list of 26 technical parameters for each part,
   \item Recording the values of five key electronic parameters: voltage, current, power, number of pins, and package.
 \end{enumerate}
@@ -17,30 +17,30 @@ Annotations were performed by carefully reading datasheets and entering the requ
 \subsection{Baselines}
 To fairly assess the performance of our end-to-end pipeline, we compare against several strong baselines, each representing a classical or ablated approach:
 \begin{itemize}
-  \item \textbf{RegexOnly}: Applies handcrafted regular expressions to extract the MPN from text, isolating the challenge of part number identification without any model-based reasoning.
-  \item \textbf{GPT-3.5 (various zero/multi-shot settings)}: Includes zero-shot ($T=0.0$), zero-shot ($T=0.7$), and multi-shot ($T=0.7$) variants of GPT-3.5 for MPN extraction. This group of baselines demonstrates the effect of prompt engineering and decoding strategy on LLM-based extraction, and provides a fair comparison to our method.
-  \item \textbf{APIOnly}: Directly queries the Octopart API using the extracted MPN, without attempting web search or PDF fallback if the API response is incomplete. This simulates a typical single-source retrieval workflow, lacking robustness to missing or partial data.
+  \item \textbf{RegexOnly}: Applies handcrafted regular expressions to extract the component identifier from text, isolating the challenge of identifier extraction without any model-based reasoning.
+  \item \textbf{GPT-3.5 (various zero/multi-shot settings)}: Includes zero-shot ($T=0.0$), zero-shot ($T=0.7$), and multi-shot ($T=0.7$) variants of GPT-3.5 for component identifier extraction. This group of baselines demonstrates the effect of prompt engineering and decoding strategy on LLM-based extraction, and provides a fair comparison to our method.
+  \item \textbf{APIOnly}: Directly queries the Octopart API using the extracted component identifier, without attempting web search or PDF fallback if the API response is incomplete. This simulates a typical single-source retrieval workflow, lacking robustness to missing or partial data.
   \item \textbf{PyPDF2}: Uses the PyPDF2 Python library to extract all text from datasheet PDFs, then applies rule-based heuristics (regular expressions and keyword matching) to identify and extract technical parameters. No language model or agent-based reasoning is used, simulating a fully classical, non-LLM pipeline for end-to-end extraction.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Evaluation Metrics}
 \begin{description}
-  \item[\textbf{MPN~Accuracy}] Fraction of entries for which the extracted Manufacturer Part Number exactly matches the ground truth. (Compared between RegexOnly, GPT-3.5 variants, and Ours.)
+  \item[\textbf{Identifier~Accuracy}] Fraction of entries for which the extracted component identifier exactly matches the ground truth. (Compared between RegexOnly, GPT-3.5 variants, and Ours.)
   \item[\textbf{Field Coverage Rate}] Average number of non-null fields per row, divided by the total possible fields (26). (Compared between APIOnly and Ours.)
   \item[\textbf{Field~F1}] For the five most important technical parameters, the proportion extracted correctly; a parameter is considered correct if its value matches the ground truth within a $\pm2\,\%$ tolerance after unit normalisation. (Compared between PyPDF2 and Ours.)
 \end{description}
 
 %--------------------------------------------------
 \section{Results}
-\subsection{MPN Extraction (RQ1)}
+\subsection{Component Identifier Extraction (RQ1)}
 \begin{table}[H]
 \centering
-\caption{MPN extraction performance (RegexOnly, GPT-3.5 variants).}
+\caption{Component identifier extraction performance (RegexOnly, GPT-3.5 variants).}
 \label{tab:mpn}
 \begin{tabular}{lc}
 \toprule
-Method & MPN~Accuracy \\
+Method & Identifier~Accuracy \\
 \midrule
 RegexOnly                        & 0.63 \\
 GPT-3.5~(Zero-Shot, $T=0.7$)     & 0.85 \\
@@ -50,7 +50,7 @@ Ours (GPT-3.5, Multi-Shot, $T=0.0$)       & \textbf{0.97} \\
 \bottomrule
 \end{tabular}
 \end{table}
-Our agent-based pipeline achieves substantially higher MPN accuracy than RegexOnly. RegexOnly often fails on non-standard formats, while our method is robust to such variations.
+Our agent-based pipeline achieves substantially higher identifier accuracy than RegexOnly. RegexOnly often fails on non-standard formats, while our method is robust to such variations.
 
 \subsection{Field Coverage Rate (RQ2)}
 \begin{table}[H]

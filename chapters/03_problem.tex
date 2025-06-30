@@ -1,8 +1,8 @@
 \chapter{Problem Setting}
 \label{chapter:problem}
 
-\section{Characteristics of quotation analysis templates}
-A standardised quotation analysis template is a semi-structured document exchanged during early supplier negotiations.  
+\section{Characteristics of Material Pricing Sheets}
+A Material Pricing Sheet is a semi-structured document exchanged during early supplier negotiations.  
 In many companies, such templates appear in spreadsheet format.  
 Typical fields include:  
 
@@ -11,22 +11,22 @@ Typical fields include:
   \item \textbf{Price and MOQ:} preliminary unit price, minimum order quantity,
 \end{itemize}
 
-The challenge lies in the Part Designation column, which often combines technical specifications and the manufacturer part number (MPN) into a single free-text field.
+The challenge lies in the Part Designation column, which often combines technical specifications and the component identifier into a single free-text field.
 This lack of structure, along with multilingual notations (e.g., Gehäuse'', Temp. Bereich''), complicates rule-based parsing.
 
 \section{Core Challenges}
 \paragraph{C1: Inconsistent Identifier Extraction}  
-An MPN may be surrounded by package codes (``\texttt{-TR}''), voltage values, or marketing text, making pattern-matching unreliable.  
+A component identifier may be surrounded by package codes (``\texttt{-TR}''), voltage values, or marketing text, making pattern-matching unreliable.  
 Example:  
 \begin{center}
 \ttfamily PI3USB9281ZLE\_EX   20V Vbus Switch, TQFN-14, -40–85°C
 \end{center}
 
 \paragraph{C2: Incomplete Identifier-to-Parameter Mapping}
-Even after successfully extracting an MPN, there is no single public or commercial database that provides comprehensive coverage mapping part numbers to their technical parameters. Some third-party distributors offer partial mappings, but their databases are often incomplete or inconsistent, and many parts are missing or lack detailed specifications. As a result, systems cannot rely solely on these sources and must extract parameters directly from datasheets, which adds significant complexity and places greater demands on document parsing capabilities.
+Even after successfully extracting a component identifier, there is no single public or commercial database that provides comprehensive coverage mapping part numbers to their technical parameters. Some third-party distributors offer partial mappings, but their databases are often incomplete or inconsistent, and many parts are missing or lack detailed specifications. As a result, systems cannot rely solely on these sources and must extract parameters directly from datasheets, which adds significant complexity and places greater demands on document parsing capabilities.
 
 \paragraph{C3: Datasheet Discovery and Access}
-Locating a reliable datasheet for a given MPN typically follows this order of preference:
+Locating a reliable datasheet for a given component identifier typically follows this order of preference:
 \begin{enumerate}
     \item \textbf{Manufacturer website:} Most trusted and up-to-date source. However, datasheets may be missing, hidden behind registration walls, or difficult to find due to poor navigation.
     \item \textbf{Distributor platforms:} Generally good coverage and easier access, but may not always have the latest or most complete datasheets.
@@ -41,17 +41,17 @@ Standard extraction tools often struggle to correctly interpret context, units, 
 
 \section{Formal Problem Definition and Automation Requirements}
 
-The core problem is to automate the transformation of a noisy, semi-structured entry $q \in \mathcal{Q}$ from a quotation analysis template into a validated, structured specification record:
+The core problem is to automate the transformation of a noisy, semi-structured entry $q \in \mathcal{Q}$ from a Material Pricing Sheet into a validated, structured specification record:
 \[
-\mathbf{s} = \bigl(\mathrm{MPN},\; \mathrm{Voltage_{max}},\; \mathrm{Current_{max}},\; \mathrm{TempRange}, \ldots\bigr)
+\mathbf{s} = \bigl(\mathrm{CID},\; \mathrm{Voltage_{max}},\; \mathrm{Current_{max}},\; \mathrm{TempRange}, \ldots\bigr)
 \]
 where each field is extracted, validated, and aligned with authoritative sources. Optional fields may be set to \texttt{null} if not present in the source.
 
 This process must address the following, each directly mapped to a research question and technical requirement:
 
 \begin{description}
-  \item[\textbf{RQ1 / R1: Robust MPN Extraction}] Accurately identify the Manufacturer Part Number from unstructured, noisy, and multilingual part designation fields.
-  \item[\textbf{RQ2 / R2: Reliable Datasheet Retrieval}] Locate and retrieve the correct datasheet for each extracted MPN, using a combination of distributor APIs and web search to maximise coverage and reliability.
+  \item[\textbf{RQ1 / R1: Robust Component Identifier Extraction}] Accurately identify the component identifier from unstructured, noisy, and multilingual part designation fields.
+  \item[\textbf{RQ2 / R2: Reliable Datasheet Retrieval}] Locate and retrieve the correct datasheet for each extracted component identifier, using a combination of distributor APIs and web search to maximise coverage and reliability.
   \item[\textbf{RQ3 / R3: Accurate Parameter Extraction}] Extract key technical parameters (e.g., voltage, current, temperature range) from datasheets using automated methods (such as vision-language models), handling diverse layouts and formats.
 \end{description}
 
@@ -63,7 +63,7 @@ These requirements are directly aligned with the research questions and address 
 \begin{center}
 \begin{tabular}{lll}
 \textbf{Challenge} & \textbf{Requirement} & \textbf{Mapped RQ} \\\hline
-C1 & R1 & RQ1: MPN Extraction \\
+C1 & R1 & RQ1: Component Identifier Extraction \\
 C2,C3 & R2 & RQ2: Datasheet Retrieval \\
 C4 & R3 & RQ3: Parameter Extraction \\
 \end{tabular}
