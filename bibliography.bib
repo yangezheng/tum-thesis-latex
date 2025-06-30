@@ -51,47 +51,85 @@
 	keywords = {Computer Science - Computation and Language, Computer Science - Machine Learning},
 }
 
-@article{xuhuang2022layoutlmv3,
-  title     = {LayoutLMv3: Pre-training for Document AI with Unified Text and Image Masking},
-  author    = {Xu, Yiheng and Huang, Tengchao and Lv, Weijie and Cui, Lei and Wei, Furu and Zhou, Ming and Zhang, Yijuan},
-  journal   = {arXiv preprint arXiv:2204.08387},
-  year      = {2022},
-  url       = {https://arxiv.org/abs/2204.08387}
+
+@misc{xuhuang2022layoutlmv3,
+	title = {{LayoutLMv3}: {Pre}-training for {Document} {AI} with {Unified} {Text} and {Image} {Masking}},
+	shorttitle = {{LayoutLMv3}},
+	url = {http://arxiv.org/abs/2204.08387},
+	doi = {10.48550/arXiv.2204.08387},
+	abstract = {Self-supervised pre-training techniques have achieved remarkable progress in Document AI. Most multimodal pre-trained models use a masked language modeling objective to learn bidirectional representations on the text modality, but they differ in pre-training objectives for the image modality. This discrepancy adds difficulty to multimodal representation learning. In this paper, we propose {\textbackslash}textbf\{LayoutLMv3\} to pre-train multimodal Transformers for Document AI with unified text and image masking. Additionally, LayoutLMv3 is pre-trained with a word-patch alignment objective to learn cross-modal alignment by predicting whether the corresponding image patch of a text word is masked. The simple unified architecture and training objectives make LayoutLMv3 a general-purpose pre-trained model for both text-centric and image-centric Document AI tasks. Experimental results show that LayoutLMv3 achieves state-of-the-art performance not only in text-centric tasks, including form understanding, receipt understanding, and document visual question answering, but also in image-centric tasks such as document image classification and document layout analysis. The code and models are publicly available at {\textbackslash}url\{https://aka.ms/layoutlmv3\}.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Huang, Yupan and Lv, Tengchao and Cui, Lei and Lu, Yutong and Wei, Furu},
+	month = jul,
+	year = {2022},
+	note = {arXiv:2204.08387},
+	keywords = {Computer Science - Computation and Language, Computer Science - Computer Vision and Pattern Recognition},
 }
 
 
-@inproceedings{li2021structext,
-  title     = {StrucTexT: Structured Text Understanding with Multi-modal Transformers},
-  author    = {Li, Xiang and Xu, Yiheng and Cui, Lei and Huang, Shaohan and Wei, Furu and Zhou, Ming},
-  booktitle = {Proceedings of the 27th ACM SIGKDD Conference on Knowledge Discovery \& Data Mining (KDD)},
-  year      = {2021},
-  pages     = {742--752},
-  doi       = {10.1145/3447548.3467239}
+@misc{li2021structext,
+	title = {{StrucTexT}: {Structured} {Text} {Understanding} with {Multi}-{Modal} {Transformers}},
+	shorttitle = {{StrucTexT}},
+	url = {http://arxiv.org/abs/2108.02923},
+	doi = {10.48550/arXiv.2108.02923},
+	abstract = {Structured text understanding on Visually Rich Documents (VRDs) is a crucial part of Document Intelligence. Due to the complexity of content and layout in VRDs, structured text understanding has been a challenging task. Most existing studies decoupled this problem into two sub-tasks: entity labeling and entity linking, which require an entire understanding of the context of documents at both token and segment levels. However, little work has been concerned with the solutions that efficiently extract the structured data from different levels. This paper proposes a unified framework named StrucTexT, which is flexible and effective for handling both sub-tasks. Specifically, based on the transformer, we introduce a segment-token aligned encoder to deal with the entity labeling and entity linking tasks at different levels of granularity. Moreover, we design a novel pre-training strategy with three self-supervised tasks to learn a richer representation. StrucTexT uses the existing Masked Visual Language Modeling task and the new Sentence Length Prediction and Paired Boxes Direction tasks to incorporate the multi-modal information across text, image, and layout. We evaluate our method for structured text understanding at segment-level and token-level and show it outperforms the state-of-the-art counterparts with significantly superior performance on the FUNSD, SROIE, and EPHOIE datasets.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Li, Yulin and Qian, Yuxi and Yu, Yuchen and Qin, Xiameng and Zhang, Chengquan and Liu, Yan and Yao, Kun and Han, Junyu and Liu, Jingtuo and Ding, Errui},
+	month = nov,
+	year = {2021},
+	note = {arXiv:2108.02923},
+	keywords = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Computation and Language},
 }
 
-@article{hong2023metagpt,
-  title     = {MetaGPT: Meta Programming for Multi-Agent Collaborative Framework},
-  author    = {Hong, Danning and Zhang, Ke and Yang, Hong and Li, Zhen and Hu, Xiaoyuan and Zhao, Wayne Xin and Wen, Ji-Rong},
-  journal   = {arXiv preprint arXiv:2308.00352},
-  year      = {2023},
-  url       = {https://arxiv.org/abs/2308.00352}
+
+
+
+@misc{hong2023metagpt,
+	title = {{MetaGPT}: {Meta} {Programming} for {A} {Multi}-{Agent} {Collaborative} {Framework}},
+	shorttitle = {{MetaGPT}},
+	url = {http://arxiv.org/abs/2308.00352},
+	doi = {10.48550/arXiv.2308.00352},
+	abstract = {Remarkable progress has been made on automated problem solving through societies of agents based on large language models (LLMs). Existing LLM-based multi-agent systems can already solve simple dialogue tasks. Solutions to more complex tasks, however, are complicated through logic inconsistencies due to cascading hallucinations caused by naively chaining LLMs. Here we introduce MetaGPT, an innovative meta-programming framework incorporating efficient human workflows into LLM-based multi-agent collaborations. MetaGPT encodes Standardized Operating Procedures (SOPs) into prompt sequences for more streamlined workflows, thus allowing agents with human-like domain expertise to verify intermediate results and reduce errors. MetaGPT utilizes an assembly line paradigm to assign diverse roles to various agents, efficiently breaking down complex tasks into subtasks involving many agents working together. On collaborative software engineering benchmarks, MetaGPT generates more coherent solutions than previous chat-based multi-agent systems. Our project can be found at https://github.com/geekan/MetaGPT},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Hong, Sirui and Zhuge, Mingchen and Chen, Jiaqi and Zheng, Xiawu and Cheng, Yuheng and Zhang, Ceyao and Wang, Jinlin and Wang, Zili and Yau, Steven Ka Shing and Lin, Zijuan and Zhou, Liyang and Ran, Chenyu and Xiao, Lingfeng and Wu, Chenglin and Schmidhuber, Jürgen},
+	month = nov,
+	year = {2024},
+	note = {arXiv:2308.00352},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Multiagent Systems},
 }
 
-@article{shen2021layoutparser,
-  title     = {LayoutParser: A Unified Toolkit for Deep Learning Based Document Image Analysis},
-  author    = {Shen, Ze and Xu, Yao and Zhang, Rui and Ma, Tristan and Ross, Daniel and Wu, William and Li, Zhongdao and Cai, Zicheng},
-  journal   = {arXiv preprint arXiv:2103.15348},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2103.15348}
+@misc{shen2021layoutparser,
+	title = {{LayoutParser}: {A} {Unified} {Toolkit} for {Deep} {Learning} {Based} {Document} {Image} {Analysis}},
+	shorttitle = {{LayoutParser}},
+	url = {http://arxiv.org/abs/2103.15348},
+	doi = {10.48550/arXiv.2103.15348},
+	abstract = {Recent advances in document image analysis (DIA) have been primarily driven by the application of neural networks. Ideally, research outcomes could be easily deployed in production and extended for further investigation. However, various factors like loosely organized codebases and sophisticated model configurations complicate the easy reuse of important innovations by a wide audience. Though there have been on-going efforts to improve reusability and simplify deep learning (DL) model development in disciplines like natural language processing and computer vision, none of them are optimized for challenges in the domain of DIA. This represents a major gap in the existing toolkit, as DIA is central to academic research across a wide range of disciplines in the social sciences and humanities. This paper introduces layoutparser, an open-source library for streamlining the usage of DL in DIA research and applications. The core layoutparser library comes with a set of simple and intuitive interfaces for applying and customizing DL models for layout detection, character recognition, and many other document processing tasks. To promote extensibility, layoutparser also incorporates a community platform for sharing both pre-trained models and full document digitization pipelines. We demonstrate that layoutparser is helpful for both lightweight and large-scale digitization pipelines in real-word use cases. The library is publicly available at https://layout-parser.github.io/.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Shen, Zejiang and Zhang, Ruochen and Dell, Melissa and Lee, Benjamin Charles Germain and Carlson, Jacob and Li, Weining},
+	month = jun,
+	year = {2021},
+	note = {arXiv:2103.15348},
+	keywords = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Artificial Intelligence},
 }
 
-@inproceedings{chen2016xgboost,
-  title     = {XGBoost: A Scalable Tree Boosting System},
-  author    = {Chen, Tianqi and Guestrin, Carlos},
-  booktitle = {Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)},
-  year      = {2016},
-  pages     = {785--794},
-  doi       = {10.1145/2939672.2939785}
+
+@misc{chen2016xgboost,
+	title = {{XGBoost}: {A} {Scalable} {Tree} {Boosting} {System}},
+	shorttitle = {{XGBoost}},
+	url = {http://arxiv.org/abs/1603.02754},
+	doi = {10.48550/arXiv.1603.02754},
+	abstract = {Tree boosting is a highly effective and widely used machine learning method. In this paper, we describe a scalable end-to-end tree boosting system called XGBoost, which is used widely by data scientists to achieve state-of-the-art results on many machine learning challenges. We propose a novel sparsity-aware algorithm for sparse data and weighted quantile sketch for approximate tree learning. More importantly, we provide insights on cache access patterns, data compression and sharding to build a scalable tree boosting system. By combining these insights, XGBoost scales beyond billions of examples using far fewer resources than existing systems.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Chen, Tianqi and Guestrin, Carlos},
+	month = jun,
+	year = {2016},
+	note = {arXiv:1603.02754},
+	keywords = {Computer Science - Machine Learning},
 }
 
 @article{ellram2013shouldcost,
@@ -124,27 +162,50 @@
   doi       = {10.1016/j.cie.2022.107970}
 }
 
-@inproceedings{arik2021tabnet,
-  title     = {TabNet: Attentive Interpretable Tabular Learning},
-  author    = {Arik, Sercan and Pfister, Tomas},
-  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
-  year      = {2021},
-  pages     = {6679--6687}
+@misc{arik2021tabnet,
+	title = {{TabNet}: {Attentive} {Interpretable} {Tabular} {Learning}},
+	shorttitle = {{TabNet}},
+	url = {http://arxiv.org/abs/1908.07442},
+	doi = {10.48550/arXiv.1908.07442},
+	abstract = {We propose a novel high-performance and interpretable canonical deep tabular data learning architecture, TabNet. TabNet uses sequential attention to choose which features to reason from at each decision step, enabling interpretability and more efficient learning as the learning capacity is used for the most salient features. We demonstrate that TabNet outperforms other neural network and decision tree variants on a wide range of non-performance-saturated tabular datasets and yields interpretable feature attributions plus insights into the global model behavior. Finally, for the first time to our knowledge, we demonstrate self-supervised learning for tabular data, significantly improving performance with unsupervised representation learning when unlabeled data is abundant.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Arik, Sercan O. and Pfister, Tomas},
+	month = dec,
+	year = {2020},
+	note = {arXiv:1908.07442},
+	keywords = {Computer Science - Machine Learning, Statistics - Machine Learning},
 }
 
-@inproceedings{gorishniy2021revisiting,
-  title     = {Revisiting Deep Learning Models for Tabular Data},
-  author    = {Gorishniy, Yury and Rubachev, Ilya and Khrulkov, Valentin and Babenko, Artem},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2021}
+@misc{gorishniy2021revisiting,
+	title = {Revisiting {Deep} {Learning} {Models} for {Tabular} {Data}},
+	url = {http://arxiv.org/abs/2106.11959},
+	doi = {10.48550/arXiv.2106.11959},
+	abstract = {The existing literature on deep learning for tabular data proposes a wide range of novel architectures and reports competitive results on various datasets. However, the proposed models are usually not properly compared to each other and existing works often use different benchmarks and experiment protocols. As a result, it is unclear for both researchers and practitioners what models perform best. Additionally, the field still lacks effective baselines, that is, the easy-to-use models that provide competitive performance across different problems. In this work, we perform an overview of the main families of DL architectures for tabular data and raise the bar of baselines in tabular DL by identifying two simple and powerful deep architectures. The first one is a ResNet-like architecture which turns out to be a strong baseline that is often missing in prior works. The second model is our simple adaptation of the Transformer architecture for tabular data, which outperforms other solutions on most tasks. Both models are compared to many existing architectures on a diverse set of tasks under the same training and tuning protocols. We also compare the best DL models with Gradient Boosted Decision Trees and conclude that there is still no universally superior solution.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Gorishniy, Yury and Rubachev, Ivan and Khrulkov, Valentin and Babenko, Artem},
+	month = oct,
+	year = {2023},
+	note = {arXiv:2106.11959},
+	keywords = {Computer Science - Machine Learning},
 }
 
-@article{somepalli2021saint,
-  title     = {SAINT: Improved Neural Networks for Tabular Data via Row Attention and Contrastive Pre-Training},
-  author    = {Somepalli, Gowtham Ramakrishnan and Goldblum, Micah and Goldstein, Tom},
-  journal   = {arXiv preprint arXiv:2106.01342},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2106.01342}
+
+
+@misc{somepalli2021saint,
+	title = {{SAINT}: {Improved} {Neural} {Networks} for {Tabular} {Data} via {Row} {Attention} and {Contrastive} {Pre}-{Training}},
+	shorttitle = {{SAINT}},
+	url = {http://arxiv.org/abs/2106.01342},
+	doi = {10.48550/arXiv.2106.01342},
+	abstract = {Tabular data underpins numerous high-impact applications of machine learning from fraud detection to genomics and healthcare. Classical approaches to solving tabular problems, such as gradient boosting and random forests, are widely used by practitioners. However, recent deep learning methods have achieved a degree of performance competitive with popular techniques. We devise a hybrid deep learning approach to solving tabular data problems. Our method, SAINT, performs attention over both rows and columns, and it includes an enhanced embedding method. We also study a new contrastive self-supervised pre-training method for use when labels are scarce. SAINT consistently improves performance over previous deep learning methods, and it even outperforms gradient boosting methods, including XGBoost, CatBoost, and LightGBM, on average over a variety of benchmark tasks.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Somepalli, Gowthami and Goldblum, Micah and Schwarzschild, Avi and Bruss, C. Bayan and Goldstein, Tom},
+	month = jun,
+	year = {2021},
+	note = {arXiv:2106.01342},
+	keywords = {Computer Science - Machine Learning, Computer Science - Artificial Intelligence, Statistics - Machine Learning},
 }
 
 @inproceedings{wang2023bomprice,
@@ -183,11 +244,18 @@
   pages     = {141--198}
 }
 
-@article{wu2023autogen,
-  title     = {AutoGen: Enabling Next-Generation Large Language Model Applications through Multi-Agent Conversation},
-  author    = {Wu, Yuandong and Ji, Shunyu and Yao, Shun and others},
-  journal   = {arXiv preprint arXiv:2308.08155},
-  year      = {2023},
-  url       = {https://arxiv.org/abs/2308.08155}
-}
 
+@misc{wu2023autogen,
+	title = {{AutoGen}: {Enabling} {Next}-{Gen} {LLM} {Applications} via {Multi}-{Agent} {Conversation}},
+	shorttitle = {{AutoGen}},
+	url = {http://arxiv.org/abs/2308.08155},
+	doi = {10.48550/arXiv.2308.08155},
+	abstract = {AutoGen is an open-source framework that allows developers to build LLM applications via multiple agents that can converse with each other to accomplish tasks. AutoGen agents are customizable, conversable, and can operate in various modes that employ combinations of LLMs, human inputs, and tools. Using AutoGen, developers can also flexibly define agent interaction behaviors. Both natural language and computer code can be used to program flexible conversation patterns for different applications. AutoGen serves as a generic infrastructure to build diverse applications of various complexities and LLM capacities. Empirical studies demonstrate the effectiveness of the framework in many example applications, with domains ranging from mathematics, coding, question answering, operations research, online decision-making, entertainment, etc.},
+	urldate = {2025-06-29},
+	publisher = {arXiv},
+	author = {Wu, Qingyun and Bansal, Gagan and Zhang, Jieyu and Wu, Yiran and Li, Beibin and Zhu, Erkang and Jiang, Li and Zhang, Xiaoyun and Zhang, Shaokun and Liu, Jiale and Awadallah, Ahmed Hassan and White, Ryen W. and Burger, Doug and Wang, Chi},
+	month = oct,
+	year = {2023},
+	note = {arXiv:2308.08155},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
+}

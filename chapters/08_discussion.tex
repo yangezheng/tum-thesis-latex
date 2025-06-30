@@ -6,27 +6,23 @@
 The preceding chapters demonstrate that a multi-agent pipeline can transform noisy quotation-template entries into high-quality specification data and deliver tangible business value via downstream cost modelling.  Three insights stand out:
 \begin{enumerate}
   \item \textbf{Tool use amplifies LLM accuracy}. Function-calling agents equipped with retrieval and vision tools close the gap between open-ended reasoning and structured data extraction.
-  \item \textbf{Validation layers are essential}. JSON-Schema, range checks, and cross-source consistency filters reduced field-level error by 5–8~percentage points without noticeable latency overhead.
+  \item \textbf{Validation layers are essential}. JSON-Schema and range checks reduced field-level error without noticeable latency overhead.
   \item \textbf{Structured specs have predictive power}. Section~\ref{chapter:costmodel} shows that technical parameters alone explain over 70\,\% of price variance for electronic components.
 \end{enumerate}
 
 %--------------------------------------------------
 \section{Limitations}
-\subsection{Data Coverage}
-Although the corpus covers thousands of part numbers, it is biased toward passive and digital ICs.  Electro-mechanical parts and high-power modules remain under-represented.
-
 \subsection{Model Generalisation}
-GPT-4 Vision handled most datasheets, yet failed on scans with heavy watermarking or handwritten annotations.  Future versions may need OCR fine-tuning or synthetic augmentation.
+While GPT-4o offers a large 128K context window, it can still struggle with very large datasheets that exceed this limit, requiring careful chunking or summarisation strategies.
 
-\subsection{Cost and Privacy}
-Running a vision model at scale incurs non-trivial token costs and raises document-privacy concerns, especially when datasheets include confidential errata.
+\subsection{Cost and Latency}
+Parsing large numbers of PDF images with language models can lead to significant costs, especially due to the high number of tokens processed by vision-enabled models. Additionally, because the pipeline relies on frequent calls to language models for extraction and validation, overall latency can become a bottleneck, particularly when processing batches of documents or operating at scale.
 
 %--------------------------------------------------
 \section{Industrial Implications}
 \begin{itemize}
-  \item \textbf{Engineer Throughput}: Automating the extraction of technical specifications from quotation templates can reduce manual triage and data entry time by approximately 60–70\,\%, based on our evaluation. This allows engineering teams to focus on design, validation, and supplier communication rather than repetitive documentation tasks.
-  \item \textbf{Supplier Negotiations}: By generating early, data-driven cost estimates directly from extracted specifications, procurement teams can establish more accurate price anchors during Request for Quotation (RFQ) rounds. This reduces reliance on supplier-provided data and supports more objective, evidence-based negotiations.
-  \item \textbf{Quality Assurance}: The pipeline attaches provenance metadata—such as source URLs and datasheet page numbers—to each extracted parameter. This enables traceable audit trails for quality management and compliance, without imposing additional manual effort on staff.
+  \item \textbf{Supplier Negotiations}: By generating early, data-driven cost estimates directly from extracted specifications, procurement teams can establish more accurate price anchors. This reduces reliance on supplier-provided data and supports more objective, evidence-based negotiations.
+  \item \textbf{Quality Assurance}: The pipeline attaches provenance metadata—such as source URLs and datasheet page numbers—to each extracted parameter. This enables traceable audit trails for quality management and compliance.
 \end{itemize}
 
 %--------------------------------------------------
@@ -34,8 +30,9 @@ Running a vision model at scale incurs non-trivial token costs and raises docume
 \begin{enumerate}
   \item \textbf{Marking Code Recognition}: Develop an upstream vision-based scanner to extract marking codes directly from component images, then map these codes to Manufacturer Part Numbers (MPNs) before entering the main pipeline. This would enable processing of loose or unlabelled parts, broadening applicability beyond cases where the MPN is explicitly available. Integrating a robust marking code–to–MPN mapping database and handling ambiguous or partial codes will be key challenges.
   \item \textbf{Active Learning}: Incorporate human-in-the-loop feedback to iteratively improve the system. This could involve retraining prompts, updating ranking heuristics, or fine-tuning models on low-confidence or misclassified cases. Building an interface for efficient expert review and correction will accelerate adaptation to new component types and edge cases.
-  \item \textbf{Edge Deployment and Model Diversity}: Explore deployment of quantised vision-language models (VLMs) for on-premises inference, addressing data-sovereignty and privacy requirements where cloud APIs are not viable. In addition to GPT-4 Vision, evaluate alternative models such as open-source VLMs (e.g., LLaVA, MiniGPT-4, or BLIP-2) for datasheet and marking code recognition, balancing accuracy, latency, and cost for industrial use.
-  \item \textbf{Dynamic Pricing Models}: Integrate commodity indices and supply-chain risk signals into the cost model for real-time updates, enabling more responsive and market-aware price predictions.
+  \item \textbf{Edge Deployment and Model Diversity}: Investigate assigning different models to different agents within the pipeline, selecting the most suitable model for each task. For example, some agents could run on local, quantised vision-language models (VLMs) to improve performance or reduce costs, especially where data privacy or latency is a concern. Others might leverage cloud-based models like GPT-4 Vision for tasks requiring higher accuracy or broader context. Evaluating a mix of open-source VLMs (e.g., LLaVA, MiniGPT-4, BLIP-2) and commercial APIs will help balance accuracy, speed, and cost for various industrial scenarios.
+  \item \textbf{Agent Specialisation by Data Source}: Explore using specialised agents that extract technical parameters from different sources, such as datasheets, supplier websites, or CAD files. This approach could improve coverage and robustness by leveraging the strengths of each data source and tailoring extraction strategies accordingly.
+  \item \textbf{Agent Specialisation by Tooling}: Develop agents that use different tools or extraction methods—such as OCR or Web Search—to obtain technical parameters. In some cases, it will be important to adjust the language model or prompt to best leverage a particular tool. Combining outputs from agents with diverse toolsets and tailored prompts may further increase extraction accuracy and resilience to noisy or heterogeneous input formats.
 \end{enumerate}
 
 %--------------------------------------------------

@@ -71,14 +71,14 @@ Our pipeline achieves much higher field coverage than APIOnly, which is limited 
 \subsection{Parameter Extraction (RQ3)}
 \begin{table}[H]
 \centering
-\caption{Field-level F1 score for key parameters (PyPDF2 vs. Ours).}
+\caption{Field-level accuracy for key parameters.}
 \label{tab:fields}
 \begin{tabular}{lccccc}
 \toprule
-Method & Voltage & Current & Power & Pins & Package \\
+Method & Package & Pins & Max Vin & Min Vin & Iout \\
 \midrule
-PyPDF2    & 0.49 & 0.45 & 0.36 & 0.51 & 0.54 \\
-Ours      & \textbf{0.93} & \textbf{0.94} & \textbf{0.91} & \textbf{0.95} & \textbf{0.96} \\
+PyPDF2    & 0.49 & 0.45 & 0.26 & 0.21 & 0.24 \\
+Ours      & \textbf{0.93} & \textbf{0.91} & \textbf{0.81} & \textbf{0.79} & \textbf{0.82} \\
 \bottomrule
 \end{tabular}
 \end{table}

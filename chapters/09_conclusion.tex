@@ -7,11 +7,13 @@ This thesis proposed and implemented a multi-agent system that converts noisy qu
 
 %--------------------------------------------------
 \section{Answers to Research Questions}
-\begin{enumerate}
-  \item \textbf{RQ1—MPN extraction}: The agent attained an F1 of~0.94, outperforming regex baselines by 28~percentage points.
-  \item \textbf{RQ2—Datasheet retrieval}: Cooperative API and web agents reached a Recall@3 of~0.93, ensuring broad coverage across suppliers.
-  \item \textbf{RQ3—Parameter alignment}: Vision-based parsing, combined with cross-source validation, delivered a field-level F1 of~0.90.
-\end{enumerate}
+
+\textbf{MPN extraction}: The agent achieved an accuracy of 0.97, substantially higher than the RegexOnly baseline of 0.63.
+
+\textbf{Datasheet \& metadata retrieval}: Using a cooperative API and web approach, the system reached a field coverage rate of 0.79, compared to 0.27 for APIOnly.
+
+\textbf{Parameter extraction}: The pipeline achieved near-human accuracy on all five key parameters, with field-level accuracy ranging from 0.79 to 0.93 and large gains over the PyPDF2 baseline.
+
 All targets defined in Chapter~\ref{chapter:problem} were met or exceeded.
 
 %--------------------------------------------------
@@ -19,14 +21,14 @@ All targets defined in Chapter~\ref{chapter:problem} were met or exceeded.
 \begin{itemize}
   \item A fault-tolerant orchestration of specialised LLM agents leveraging external tools.
   \item An open-sourced evaluation corpus and metrics for quotation-template processing.
-  \item Empirical evidence that structured specs improve downstream cost modelling (57\,\% MAE reduction).
+  \item Demonstration, via the cost modelling example, of how enabling downstream analytics depends on the availability of structured specifications produced by the proposed system.
 \end{itemize}
 
 %--------------------------------------------------
 \section{Future Directions}
 Beyond the items listed in Chapter~\ref{chapter:discussion}, two strategic avenues merit exploration:
 \begin{itemize}
-  \item \textbf{Cross-domain generalisation}: Adapting the architecture to mechanical BOMs and service quotations.
+  \item \textbf{Marking code–first architecture}: Extending the system to scan component marking codes directly and initiate extraction from these codes, enabling processing even when the MPN is not explicitly available.
   \item \textbf{Human–AI collaboration}: Designing UX workflows where engineers can correct or confirm extractions with minimal friction.
 \end{itemize}
 
