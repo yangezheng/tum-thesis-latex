@@ -172,7 +172,7 @@ If validation fails (for example, if a value is out of range or the type is inco
 %--------------------------------------------------
 \section{Orchestration and State Management}
 
-The entire workflow is orchestrated with \textbf{LangGraph}, a light-weight, graph-based execution engine that treats every agent as a typed node in a directed graph.  Listing~\ref{lst:component_graph} shows a condensed excerpt of the Python definition; the real graph is functionally identical to the layered diagram in Chapter~\ref{chapter:architecture}.
+The entire workflow is orchestrated with \textbf{LangGraph}, a lightweight, graph-based execution engine that treats each agent as a typed node in a directed graph. The implementation closely follows the layered architecture described in Chapter~\ref{chapter:architecture}.
 \begin{itemize}
   \item \textbf{Nodes} \quad Each node wraps a single agent function (\emph{Coordinator Agent}, \emph{API Retrieval Agent}, \emph{PDF Retrieval Agent}, \emph{Validation}) and declares the portion of state it consumes and produces.
   \item \textbf{Edges} \quad Edges represent both the normal flow of data and the conditional paths for retries or fallbacks when errors occur. For example, the \emph{Validation} node sets a \verb|validation_failed| flag to either \texttt{true} or \texttt{false}. If validation fails, LangGraph routes execution back to the \emph{Coordinator Agent} to regenerate or repair the data, as shown by the dashed feedback loop in Figure~\ref{fig:architecture}.
