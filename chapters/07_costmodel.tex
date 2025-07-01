@@ -3,7 +3,7 @@
 
 %--------------------------------------------------
 \subsection{Motivation}
-While the previous chapter demonstrates high-fidelity extraction of technical parameters, stakeholders ultimately care about the economic impact: can the structured data reduce effort in early price negotiations? To quantify this value, we train machine–learning models that predict the expected unit price of an electronic component based solely on the pipeline's output. Here, we illustrate the approach using MOSFETs as a representative example.
+While the previous chapter demonstrates high-fidelity extraction of technical parameters, stakeholders ultimately care about the economic impact: can the structured data reduce effort in early price negotiations? To quantify this value, we train machine–learning models that predict the expected unit price of an electronic component based solely on the pipeline's output. Here, we illustrate the approach using Metal-Oxide-Semiconductor Field-Effect Transistors (MOSFETs) as a representative example.
 
 %--------------------------------------------------
 \subsection{Dataset}
@@ -97,6 +97,6 @@ Id\_25C\_ta         & Low \\
 
 %--------------------------------------------------
 \subsection{Discussion}
-While the model achieves strong accuracy ($R^2 = 0.84$) for MOSFETs, it is important to note that all prices in our dataset are for a fixed purchase quantity of 1000 units, which may not generalise to other order volumes where pricing can differ due to volume discounts not captured by technical specs.
+While the model achieves solid accuracy ($R^2 = 0.84$) for MOSFETs, it is important to note that all prices in our dataset are for a fixed purchase quantity of 1000 units, which may not generalise to other order volumes where pricing can differ due to volume discounts not captured by technical specs.
 
 %--------------------------------------------------
