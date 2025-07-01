@@ -73,10 +73,8 @@ encoder with a large language model, enabling open-vocabulary reasoning across
 arbitrary documents.
 Although early demonstrations highlight science articles and receipts,
 rigorous evaluation on \emph{technical component datasheets} is scarce.
-My work fills this gap: a GPT-4 Vision–based \textbf{Parsing Agent} is
-prompt-engineered to output \emph{schema-validated JSON} containing technical parameters.
-This focus on reliability contrasts with prior VLM
-applications that prioritise free-form captioning or QA.
+
+\textbf{Our contribution:} We introduce a GPT-4 Vision–based \textbf{Parsing Agent} tailored for extracting structured data from such datasheets. To address challenges like inconsistent layout, multi-column formatting, and embedded diagrams, we tested and developed a prompt pipeline that guides the model through PDF linearization and structured parsing. The system outputs schema-validated JSON containing key technical parameters, ensuring reliability and consistency. This contrasts with prior VLM applications that focus primarily on free-form captioning or general question answering, rather than precise extraction.
 
 %--------------------------------------------------
 \section{Multi-Agent Orchestration Frameworks}
@@ -103,7 +101,7 @@ LangGraph\footnote{\url{https://github.com/langchain-ai/langgraph}} is an open-s
 
 %--------------------------------------------------
 \section{Machine Learning for Price Prediction}
-Machine learning models for tabular data have become a standard approach for predicting prices and costs in a variety of domains, including manufacturing, retail, and supply chain management. These models leverage structured features such as technical specifications, categorical attributes, and contextual information to estimate target values like unit price or production cost. The effectiveness of these models depends on the quality and completeness of the input features, which are often extracted from unstructured or semi-structured sources.
+An innovative approach to price and cost prediction leverages machine learning models designed for tabular data, enabling accurate estimation across domains such as manufacturing, retail, and supply chain management. By transforming unstructured or semi-structured information—like technical specifications and contextual attributes—into structured features, these models can predict target values such as unit price or production cost with high precision. The novelty of this method lies in its ability to integrate diverse, previously inaccessible data sources into a unified predictive framework, thereby enhancing both the scope and reliability of price estimation.
 
 Traditional approaches to price prediction relied on rule-based systems or simple statistical models. More recently, supervised learning methods—including linear regression, gradient-boosted decision trees, and deep neural networks—have demonstrated superior performance on a range of price prediction tasks. The choice of model and feature engineering strategy is often dictated by the complexity of the data and the presence of non-linear interactions.
 
