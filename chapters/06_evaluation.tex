@@ -26,9 +26,9 @@ To fairly assess the performance of our end-to-end pipeline, we compare against 
 %--------------------------------------------------
 \section{Evaluation Metrics}
 \begin{description}
-  \item[\textbf{Identifier~Accuracy}] Fraction of entries for which the extracted component identifier exactly matches the ground truth. (Compared between RegexOnly, GPT-3.5 variants, and Ours.)
-  \item[\textbf{Field Coverage Rate}] Average number of non-null fields per row, divided by the total possible fields (26). (Compared between APIOnly and Ours.)
-  \item[\textbf{Field~F1}] For the five most important technical parameters, the proportion extracted correctly; a parameter is considered correct if its value matches the ground truth within a $\pm2\,\%$ tolerance after unit normalisation. (Compared between PyPDF2 and Ours.)
+  \item[\textbf{Identifier~Accuracy}] Fraction of entries for which the extracted component identifier exactly matches the ground truth. (Compared between RegexOnly, GPT-3.5 variants, and this work.)
+  \item[\textbf{Field Coverage Rate}] Average number of non-null fields per row, divided by the total possible fields (26). (Compared between APIOnly and this work.)
+  \item[\textbf{Field~F1}] For the five most important technical parameters, the proportion extracted correctly; a parameter is considered correct if its value matches the ground truth within a $\pm2\,\%$ tolerance after unit normalisation. (Compared between PyPDF2 and This Work.)
 \end{description}
 
 %--------------------------------------------------
@@ -46,7 +46,7 @@ RegexOnly                        & 0.63 \\
 GPT-3.5~(Zero-Shot, $T=0.7$)     & 0.85 \\
 GPT-3.5~(Zero-Shot, $T=0.0$)     & 0.87 \\
 GPT-3.5~(Multi-Shot, $T=0.7$)    & 0.96 \\
-Ours (GPT-3.5, Multi-Shot, $T=0.0$)       & \textbf{0.97} \\
+This Work (GPT-3.5, Multi-Shot, $T=0.0$)       & \textbf{0.97} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -55,14 +55,14 @@ Our agent-based pipeline achieves substantially higher identifier accuracy than 
 \subsection{Field Coverage Rate (RQ2)}
 \begin{table}[H]
 \centering
-\caption{Field coverage rate (APIOnly vs. Ours).}
+\caption{Field coverage rate (APIOnly vs. This Work).}
 \label{tab:coverage}
 \begin{tabular}{lc}
 \toprule
 Method & Field Coverage Rate \\
 \midrule
 APIOnly   & 0.27 \\
-Ours      & \textbf{0.79} \\
+This Work      & \textbf{0.79} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -78,7 +78,7 @@ Our pipeline achieves much higher field coverage than APIOnly, which is limited 
 Method & Package & Pins & Max Vin & Min Vin & Iout \\
 \midrule
 PyPDF2    & 0.49 & 0.45 & 0.26 & 0.21 & 0.24 \\
-Ours      & \textbf{0.93} & \textbf{0.91} & \textbf{0.81} & \textbf{0.79} & \textbf{0.82} \\
+This Work      & \textbf{0.93} & \textbf{0.91} & \textbf{0.81} & \textbf{0.79} & \textbf{0.82} \\
 \bottomrule
 \end{tabular}
 \end{table}
