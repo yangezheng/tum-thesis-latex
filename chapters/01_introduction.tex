@@ -30,7 +30,7 @@ The overall challenge addressed in this thesis can be decomposed into three core
 \begin{enumerate}
     \item \textbf{Component Identifier Extraction:} Accurately extracting the component identifier from noisy and unstructured supplier text. Regular expressions are a common approach, but they are brittle—minor variations in formatting, inconsistent delimiters, or embedded product descriptions frequently cause extraction to fail. Furthermore, when a regular expression returns a null result, it is ambiguous whether no identifier is present or if the pattern simply failed to match a valid one.
     \item \textbf{Technical Parameter Retrieval:} Obtaining the relevant technical parameters (such as voltage, current, or temperature range) for a given component identifier. This typically requires locating the correct datasheet or authoritative database entry and extracting the required specifications, which is complicated by inconsistent document formats and incomplete coverage in public databases.
-    \item \textbf{Downstream Application Construction:} Leveraging the structured technical data for downstream tasks, such as automated cost prediction, CO$_2$ estimation, or supplier risk analysis. These applications depend critically on the accuracy and completeness of the extracted and validated component information, but are not part of the system itself—they serve as motivating examples of what becomes possible once the data is structured.
+    \item \textbf{Downstream Application Construction:} Leveraging the structured technical data for downstream tasks, such as automated cost prediction, technical assessment, CO$_2$ estimation, or supplier risk analysis. These applications depend critically on the accuracy and completeness of the extracted and validated component information, but are not part of the system itself—they serve as motivating examples of what becomes possible once the data is structured.
 \end{enumerate}
 
 Addressing these problems requires a holistic approach that goes beyond simple pattern matching. For the first problem, large language models~(LLMs) offer a more robust alternative to regular expressions by reasoning over free-form text and recognizing contextual cues, enabling them to identify component identifiers even when embedded in descriptive strings or surrounded by supplier-specific notations.
@@ -70,7 +70,7 @@ To answer these questions, the thesis proposes a modular pipeline whose agents e
 \section{Contribution }
 The thesis offers three concrete contributions:
 \begin{enumerate}
-  \item A fault-tolerant multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
+  \item A multi-agent framework that integrates LLMs, web search, distributor APIs, and VLM parsing into a single orchestrated workflow.  
   \item Empirical benchmarks reporting component identifier extraction accuracy, datasheet retrieval success, field-level precision/recall, and end-to-end latency.  
   \item A downstream cost-prediction experiment showing that structured specs extracted by the system provide price-estimation, thus underlining direct business impact.
 \end{enumerate}
