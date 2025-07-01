@@ -155,22 +155,22 @@ Agent coordination is implemented using the LangGraph framework, which enables f
 This approach enables modular, interpretable, and memory-aware multi-agent workflows, with robust error handling and efficient state management throughout the pipeline.
 
 \section{Source Ranking Heuristic}
-When ranking candidate PDF URLs for datasheet retrieval, the system evaluates each source using a composite cost score that reflects both technical and content-based criteria. For each candidate URL $u$, the following factors are considered:
+When ranking candidate PDF URLs for datasheet retrieval, the system evaluates each source using a composite ranking score that reflects both technical and content-based criteria. For each candidate URL $u$, the following factors are considered:
 \begin{itemize}
     \item \textbf{Domain Trust Level:} Manufacturer domains are preferred (score 0), followed by trusted distributors (score 1), with all other domains scored as 2.
     \item \textbf{Direct PDF Link:} URLs ending with \texttt{.pdf} are favored (score 0), while indirect or non-PDF links are penalized (score 1).
     \item \textbf{Historical Failure Rate:} An exponentially decayed average of previous download failures from the same host, to deprioritize unreliable sources.
     \item \textbf{PDF Size and Number of Pages:} The system first checks if the file size and page count are within acceptable ranges (e.g., 50\,kB--20\,MB and 1--20 pages). If so, the PDF is downloaded and checked individually; otherwise, the candidate is skipped.
-    \item \textbf{Keyword Presence:} After downloading, the PDF (or its metadata) is scanned for key terms such as ``specification,'' ``datasheet,'' or the target component identifier, which can boost the score for matches.
+    \item \textbf{Keyword Presence:} After downloading, the PDF (or its metadata) is scanned for key terms such as ``specification,'' ``datasheet,'' or the target component identifier, which can boost the ranking score for matches.
 \end{itemize}
-The overall cost is computed as a weighted sum of these features:
+The overall ranking score is computed as a weighted sum of these features:
 \begin{equation}
 \label{eq:heuristic}
 \resizebox{\linewidth}{!}{$
-\mathrm{cost}(u) = w_1 \cdot \mathrm{domain}(u) + w_2 \cdot \mathrm{pdfLink}(u) + w_3 \cdot \mathrm{failRate}(u) - w_4 \cdot \mathrm{keywordBonus}(u)
+\mathrm{score}(u) = w_1 \cdot \mathrm{domain}(u) + w_2 \cdot \mathrm{pdfLink}(u) + w_3 \cdot \mathrm{failRate}(u) - w_4 \cdot \mathrm{keywordBonus}(u)
 $}
 \end{equation}
-where $w_1, \ldots, w_4$ are tunable weights reflecting the importance of each criterion. Lower cost scores indicate higher-priority candidates for download and parsing.
+where $w_1, \ldots, w_4$ are tunable weights reflecting the importance of each criterion. Lower ranking scores indicate higher-priority candidates for download and parsing.
 
 \section{Data Storage and Logging}
 After downloading each PDF, the file is uploaded to Azure Blob Storage. The Azure Blob link, together with its original source URL, is stored in a PostgreSQL database hosted on Azure. The validated specification fields are stored directly in dedicated columns of the PostgreSQL table (rather than as a JSON blob), along with the \verb|component_identifier|, provenance information, and the Azure Blob link and origin.
@@ -195,4 +195,4 @@ Table~\ref{tab:reqmap} summarises how architectural components satisfy the autom
   \end{tabular}
 \end{table}
 
-Together, these design choices create a fault-tolerant, interpretable, and extensible architecture capable of meeting BMW's data-quality and throughput requirements.
+Together, these design choices create a fault-tolerant, interpretable, and extensible architecture capable of meeting stringent data-quality and throughput requirements.
