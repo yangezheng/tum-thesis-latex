@@ -26,10 +26,11 @@ All targets defined in Chapter~\ref{chapter:problem} were met or exceeded.
 
 %--------------------------------------------------
 \section{Future Directions}
-Beyond the items listed in Chapter~\ref{chapter:discussion}, two strategic avenues merit exploration:
+In addition to the directions discussed in Chapter~\ref{chapter:discussion}, several further avenues could strengthen and extend the multi-agent data enrichment system:
 \begin{itemize}
-  \item \textbf{Marking code–first architecture}: Extending the system to scan component marking codes directly and initiate extraction from these codes, enabling processing even when the component identifier is not explicitly available.
-  \item \textbf{Human–AI collaboration}: Designing UX workflows where engineers can correct or confirm extractions with minimal friction.
+  \item \textbf{Human–AI collaboration}: Integrate user-facing workflows and interfaces that allow engineers to review, correct, or confirm extracted data with minimal friction. Wrapping these capabilities into the existing toolset will enable efficient human-in-the-loop validation and continuous improvement of extraction quality.
+  \item \textbf{Cost model feedback}: Use the cost model not only for downstream analytics, but as an active feedback signal for data enrichment. For example, when the cost model detects anomalous predictions or high uncertainty, the system can trigger targeted re-extraction, additional validation, or human review for those specific cases—closing the loop between analytics and data quality.
+  \item \textbf{Broader tool integration}: Expand the system by wrapping and integrating additional tools—such as advanced OCR, web scraping, or CAD parsers—within the multi-agent framework. This will further increase coverage, robustness, and the ability to handle diverse data sources and formats.
 \end{itemize}
 
 %--------------------------------------------------
